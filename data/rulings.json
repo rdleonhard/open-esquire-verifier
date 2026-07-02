@@ -1,5 +1,16 @@
 {
- "updated": "2026-07-02T17:06:29-04:00",
- "total": 0,
- "rulings": []
+ "updated": "2026-07-02T17:29:42-04:00",
+ "total": 1,
+ "rulings": [
+  {
+   "decision": "verified",
+   "filed": "17:28:45",
+   "ruled": "17:28:55",
+   "date": "2026-07-02",
+   "via": "tap",
+   "kind": "cite",
+   "id": "B8453-0",
+   "text": "Marbury v. Madison, 5 U.S. (1 Cranch) 137 (1803): the judicial power includes the authority to declare acts of Congress repugnant to the Constitution void."
+  }
+ ]
 }

@@ -30,6 +30,7 @@ IP_CACHE = os.path.expanduser("~/.cyd_ip")
 PUBLISH = os.path.expanduser(
     "~/Library/Application Support/openesquire-docket/publish.sh")
 POLL_S = 30
+TAG = os.environ.get("OE_TAG", "B8453")   # device/receipt id prefix, per chain
 
 KIND_NAMES = {0: "", 1: "cite", 2: "char"}
 RULING_CODES = {"verified": 1, "denied": 2, "wrong": 3}
@@ -112,7 +113,7 @@ def cycle():
             if not ip:
                 print("device unreachable; will retry")
                 return
-        vid = "B-%d" % i
+        vid = "%s-%d" % (TAG, i)
         st = device_get(ip, "/verify?id=" + vid)
         if st.get("unknown"):
             q = urllib.parse.urlencode(

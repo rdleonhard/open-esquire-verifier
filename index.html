@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open Esquire &middot; Verifier Public Docket</title>
+<meta name="description" content="Public record of attorney rulings on AI-presented case law: citations verified, refused, or found wrong.">
+<style>
+:root{
+  --bg:#050608; --panel:#10131a; --panel2:#0b0e14; --line:#1d2230;
+  --gold:#e7be55; --gold-dim:#7a5f2a; --gray:#c2c7d0; --white:#f8fafc;
+  --red:#ff8a80; --dim:#6b7382; --ox:#5c2b2e; --blue:#6ca0dc; --silver:#acb4c0;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--gray);
+ font-family:ui-monospace,'JetBrains Mono',Menlo,Consolas,monospace;
+ background-image:radial-gradient(ellipse at 50% -10%, #10131a 0%, #050608 60%)}
+.wrap{max-width:880px;margin:0 auto;padding:34px 22px 60px}
+header{display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--ox);padding-bottom:18px}
+.mark{color:var(--gold);font-size:34px;line-height:1}
+h1{color:var(--gold);font-size:26px;letter-spacing:5px;margin:0}
+.tag{color:var(--dim);font-size:11px;letter-spacing:2.5px;margin-top:4px}
+.intro{border-left:3px solid var(--gold-dim);background:var(--panel2);border-radius:0 8px 8px 0;
+ padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.7;color:var(--gray)}
+.intro b{color:var(--white)}
+.intro .v{color:var(--gold)} .intro .w{color:var(--red)} .intro .d{color:var(--silver)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+ padding:10px 16px;font-size:12px;letter-spacing:1px;min-width:96px}
+.chip .n{display:block;font-size:22px;margin-top:4px;color:var(--white)}
+.chip.v .n{color:var(--gold)} .chip.w .n{color:var(--red)} .chip.d .n{color:var(--silver)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 14px;align-items:center}
+.fbtn{background:var(--panel);border:1px solid var(--line);color:var(--gray);border-radius:7px;
+ padding:8px 14px;font:inherit;font-size:12px;letter-spacing:1px;cursor:pointer}
+.fbtn.on{border-color:var(--gold);color:var(--gold)}
+#q{flex:1;min-width:180px;background:var(--panel);border:1px solid var(--line);border-radius:7px;
+ color:var(--white);padding:9px 12px;font:inherit;font-size:13px}
+#q:focus{outline:none;border-color:var(--gold)}
+.entry{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+ padding:16px 150px 14px 18px;margin-bottom:12px;overflow:hidden}
+.entry .docket{color:var(--gold);font-size:13px;letter-spacing:2px}
+.entry .meta{color:var(--dim);font-size:11px;margin-top:3px;letter-spacing:1px}
+.entry .text{color:var(--white);font-size:14px;line-height:1.6;margin-top:10px;word-break:break-word}
+.kind{display:inline-block;border:1px solid var(--blue);color:var(--blue);border-radius:5px;
+ font-size:10px;letter-spacing:1.5px;padding:2px 7px;margin-left:10px;vertical-align:1px}
+.stamp{position:absolute;right:18px;top:50%;transform:translateY(-50%) rotate(-7deg);
+ border:3px solid;border-radius:6px;padding:7px 12px;font-size:15px;font-weight:700;
+ letter-spacing:3px;opacity:.92;background:rgba(0,0,0,.25)}
+.stamp small{display:block;font-size:8px;font-weight:400;letter-spacing:2px;text-align:center;
+ margin-top:3px;opacity:.75}
+.stamp.verified{color:var(--gold);border-color:var(--gold)}
+.stamp.wrong{color:var(--red);border-color:var(--red)}
+.stamp.denied{color:var(--silver);border-color:var(--silver)}
+.empty{color:var(--dim);font-style:italic;padding:30px 6px}
+footer{color:var(--dim);font-size:11px;margin-top:40px;letter-spacing:1px;line-height:1.9;
+ border-top:1px solid var(--line);padding-top:16px}
+footer a{color:var(--gold-dim)}
+@media (max-width:640px){
+ .entry{padding:16px 18px 14px}
+ .stamp{position:static;display:inline-block;transform:rotate(-4deg);margin-top:12px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <span class="mark">&#9670;</span>
+  <div>
+    <h1>OPEN ESQUIRE</h1>
+    <div class="tag">VERIFIER &middot; PUBLIC DOCKET OF ATTORNEY RULINGS</div>
+  </div>
+</header>
+
+<div class="intro">
+  A <b>licensed attorney</b> reviews case-law claims presented by AI models and rules on
+  each matter from a dedicated hardware verifier. Rulings are final and recorded here verbatim:
+  <b class="v">&#10003; VERIFIED</b> &mdash; the citation is real and good law, or the characterization is accurate &middot;
+  <b class="w">&#10007; WRONG</b> &mdash; reviewed and found inaccurate or nonexistent &middot;
+  <b class="d">&#8856; DENIED</b> &mdash; the attorney declines the question (asker refunded).
+</div>
+
+<div class="chips" id="chips"></div>
+
+<div class="controls">
+  <button class="fbtn on" data-f="all">ALL</button>
+  <button class="fbtn" data-f="verified">&#10003; VERIFIED</button>
+  <button class="fbtn" data-f="wrong">&#10007; WRONG</button>
+  <button class="fbtn" data-f="denied">&#8856; DENIED</button>
+  <input id="q" placeholder="Search the docket&hellip;" autocomplete="off">
+</div>
+
+<div id="docket"><div class="empty">Loading the docket&hellip;</div></div>
+
+<footer>
+  Records sync from the verifier device's storage; this page is a static mirror.
+  Raw data: <a href="data/rulings.json">rulings.json</a> &middot;
+  <span id="upd"></span><br>
+  Open Esquire &middot; web3 counsel &middot; the token-burn oracle interface is a future phase.
+</footer>
+</div>
+
+<script>
+let DATA = {rulings: []}, FILTER = 'all', Q = '';
+
+const KINDS = {cite: 'CITATION', char: 'CHARACTERIZATION'};
+const STAMPS = {
+  verified: {sym: '✓', label: 'GOOD LAW'},
+  wrong:    {sym: '✗', label: 'INACCURATE'},
+  denied:   {sym: '⊘', label: 'REFUNDED'},
+};
+
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+
+function chips(){
+  const t = {verified:0, wrong:0, denied:0};
+  for (const r of DATA.rulings) if (t[r.decision] !== undefined) t[r.decision]++;
+  document.getElementById('chips').innerHTML =
+    `<span class="chip">MATTERS RULED<span class="n">${DATA.rulings.length}</span></span>`+
+    `<span class="chip v">&#10003; VERIFIED<span class="n">${t.verified}</span></span>`+
+    `<span class="chip w">&#10007; WRONG<span class="n">${t.wrong}</span></span>`+
+    `<span class="chip d">&#8856; DENIED<span class="n">${t.denied}</span></span>`;
+}
+
+function render(){
+  const el = document.getElementById('docket');
+  let rows = DATA.rulings.slice().reverse();          // newest first
+  if (FILTER !== 'all') rows = rows.filter(r => r.decision === FILTER);
+  if (Q) rows = rows.filter(r =>
+    (r.text + ' ' + r.id + ' ' + (r.kind||'')).toLowerCase().includes(Q));
+  if (!rows.length){ el.innerHTML = '<div class="empty">No matters match.</div>'; return; }
+  el.innerHTML = rows.map(r => {
+    const s = STAMPS[r.decision] || {sym:'?', label:''};
+    const kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
+    return `<div class="entry">
+      <span class="docket">${esc(r.id)}</span>${kind}
+      <div class="meta">${esc(r.date||'')} &middot; filed ${esc(r.filed||'')} &middot; ruled ${esc(r.ruled||'')} &middot; via ${esc(r.via||'?')}</div>
+      <div class="text">${esc(r.text)}</div>
+      <span class="stamp ${r.decision}">${s.sym} ${r.decision.toUpperCase()}<small>${s.label}</small></span>
+    </div>`;
+  }).join('');
+}
+
+document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.fbtn').forEach(x => x.classList.remove('on'));
+  b.classList.add('on'); FILTER = b.dataset.f; render();
+});
+document.getElementById('q').addEventListener('input', e => {
+  Q = e.target.value.trim().toLowerCase(); render();
+});
+
+fetch('data/rulings.json', {cache: 'no-store'})
+  .then(r => r.json())
+  .then(d => {
+    DATA = d;
+    document.getElementById('upd').textContent = 'last sync ' + (d.updated || 'unknown');
+    chips(); render();
+  })
+  .catch(() => {
+    document.getElementById('docket').innerHTML =
+      '<div class="empty">Could not load rulings.json</div>';
+  });
+</script>
+</body>
+</html>

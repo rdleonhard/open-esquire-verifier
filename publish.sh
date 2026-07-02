@@ -21,12 +21,23 @@ ip=""
 if [ -z "$ip" ] || ! curl -s -m 3 "http://$ip/api" >/dev/null 2>&1; then
   ip="$(arp_lookup)"
 fi
-[ -n "$ip" ] || { echo "verifier not found on the network" >&2; exit 2; }
 
-curl -s -m 10 "http://$ip/log?n=50" | python3 - <<'EOF'
+# device offline -> proceed with an empty pull (exclusions still apply)
+FEED="$(mktemp)"
+trap 'rm -f "$FEED"' EXIT
+if [ -n "$ip" ] && curl -s -m 10 "http://$ip/log?n=50" -o "$FEED" 2>/dev/null \
+    && [ -s "$FEED" ]; then
+  echo "pulled log from $ip" >&2
+else
+  echo '{"rulings": []}' > "$FEED"
+  echo "verifier unreachable; syncing exclusions/local state only" >&2
+fi
+
+python3 - "$FEED" <<'EOF'
 import json, sys, datetime, os
 
-new = json.load(sys.stdin)
+with open(sys.argv[1]) as f:
+    new = json.load(f)
 path = "data/rulings.json"
 cur = {"rulings": []}
 if os.path.exists(path):

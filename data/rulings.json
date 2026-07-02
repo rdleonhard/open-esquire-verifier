@@ -1,46 +1,5 @@
 {
- "updated": "2026-07-02T16:27:36-04:00",
- "total": 4,
- "rulings": [
-  {
-   "decision": "verified",
-   "filed": "15:46:40",
-   "ruled": "15:46:54",
-   "date": "2026-07-02",
-   "via": "tap",
-   "kind": "cite",
-   "id": "D-2026-001",
-   "text": "Miranda v. Arizona, 384 U.S. 436 (1966) requires custodial-interrogation warnings"
-  },
-  {
-   "decision": "verified",
-   "filed": "15:46:43",
-   "ruled": "15:47:09",
-   "date": "2026-07-02",
-   "via": "web",
-   "kind": "char",
-   "id": "D-2026-002",
-   "text": "Erie R.R. v. Tompkins abolished general federal common law in diversity cases"
-  },
-  {
-   "decision": "verified",
-   "filed": "15:46:44",
-   "ruled": "15:47:30",
-   "date": "2026-07-02",
-   "via": "tap",
-   "kind": "cite",
-   "id": "D-2026-003",
-   "text": "Smith v. Jones, 999 F.9th 123 (2025) held AI outputs are per se admissible"
-  },
-  {
-   "decision": "denied",
-   "filed": "15:50:25",
-   "ruled": "15:51:09",
-   "date": "2026-07-02",
-   "via": "web",
-   "kind": "cite",
-   "id": "D-2026-004",
-   "text": "PERSISTENCE TEST: this matter should survive a reboot via the SD queue"
-  }
- ]
+ "updated": "2026-07-02T16:53:11-04:00",
+ "total": 0,
+ "rulings": []
 }

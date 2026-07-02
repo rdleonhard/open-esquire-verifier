@@ -11,6 +11,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# stay in sync with the remote (two clones may publish: manual + launchd agent)
+git pull --rebase --quiet 2>/dev/null || true
+
 MAC="14:33:5c:b:65:54"          # Board A (Open Esquire verifier node)
 CACHE="$HOME/.cyd_ip"
 

@@ -33,9 +33,18 @@ if os.path.exists(path):
     with open(path) as f:
         cur = json.load(f)
 
-by_id = {r["id"]: r for r in cur.get("rulings", [])}
+# docket ids listed in data/excluded.txt never appear on the public ledger
+# (practice/test entries); the device's SD log remains authoritative
+excluded = set()
+if os.path.exists("data/excluded.txt"):
+    with open("data/excluded.txt") as f:
+        excluded = {l.strip() for l in f if l.strip()}
+
+by_id = {r["id"]: r for r in cur.get("rulings", []) if r["id"] not in excluded}
 added = 0
 for r in new.get("rulings", []):
+    if r["id"] in excluded:
+        continue
     r.pop("raw", None)                  # touch coords stay private to the device
     if r["id"] not in by_id:
         added += 1

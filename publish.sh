@@ -65,14 +65,17 @@ for r in new.get("rulings", []):
     by_id[r["id"]] = r
 
 rulings = sorted(by_id.values(), key=lambda r: (r.get("date", ""), r.get("ruled", "")))
-out = {
-    "updated": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
-    "total": len(rulings),
-    "rulings": rulings,
-}
-with open(path, "w") as f:
-    json.dump(out, f, indent=1)
-print("merged: %d new, %d total" % (added, len(rulings)))
+if added == 0 and rulings == cur.get("rulings", []):
+    print("merged: 0 new, %d total (unchanged; not rewritten)" % len(rulings))
+else:
+    out = {
+        "updated": datetime.datetime.now().astimezone().isoformat(timespec="seconds"),
+        "total": len(rulings),
+        "rulings": rulings,
+    }
+    with open(path, "w") as f:
+        json.dump(out, f, indent=1)
+    print("merged: %d new, %d total" % (added, len(rulings)))
 EOF
 
 if git diff --quiet -- data/rulings.json; then

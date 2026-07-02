@@ -17,6 +17,10 @@ mirrored here.
 
 **Live docket:** the GitHub Pages site renders [`data/rulings.json`](data/rulings.json).
 
+**Receipts:** every matter has a permalink — `…/#D-2026-005` scrolls to and
+highlights that ruling (clicking a docket number copies its receipt URL).
+These URLs are what a future on-chain oracle will reference per matter.
+
 ## How records get here
 
 `./publish.sh` (run on the LAN with the verifier) pulls recent rulings from

@@ -37,8 +37,15 @@ h1{color:var(--gold);font-size:26px;letter-spacing:5px;margin:0}
  color:var(--white);padding:9px 12px;font:inherit;font-size:13px}
 #q:focus{outline:none;border-color:var(--gold)}
 .entry{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:10px;
- padding:16px 150px 14px 18px;margin-bottom:12px;overflow:hidden}
-.entry .docket{color:var(--gold);font-size:13px;letter-spacing:2px}
+ padding:16px 150px 14px 18px;margin-bottom:12px;overflow:hidden;
+ scroll-margin-top:24px;transition:border-color .4s, box-shadow .4s}
+.entry.lit{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold), 0 0 26px rgba(231,190,85,.18)}
+.entry .docket{color:var(--gold);font-size:13px;letter-spacing:2px;text-decoration:none;cursor:pointer}
+.entry .docket:hover{text-decoration:underline}
+.copied{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+ background:var(--gold);color:#000;font-size:12px;letter-spacing:1px;font-weight:700;
+ padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .25s}
+.copied.show{opacity:1}
 .entry .meta{color:var(--dim);font-size:11px;margin-top:3px;letter-spacing:1px}
 .entry .text{color:var(--white);font-size:14px;line-height:1.6;margin-top:10px;word-break:break-word}
 .kind{display:inline-block;border:1px solid var(--blue);color:var(--blue);border-radius:5px;
@@ -98,6 +105,7 @@ footer a{color:var(--gold-dim)}
   Open Esquire &middot; web3 counsel &middot; the token-burn oracle interface is a future phase.
 </footer>
 </div>
+<div class="copied" id="copied">RECEIPT URL COPIED</div>
 
 <script>
 let DATA = {rulings: []}, FILTER = 'all', Q = '';
@@ -131,13 +139,31 @@ function render(){
   el.innerHTML = rows.map(r => {
     const s = STAMPS[r.decision] || {sym:'?', label:''};
     const kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
-    return `<div class="entry">
-      <span class="docket">${esc(r.id)}</span>${kind}
+    return `<div class="entry" id="${esc(r.id)}">
+      <a class="docket" href="#${esc(r.id)}" title="Permalink — click copies the receipt URL">${esc(r.id)}</a>${kind}
       <div class="meta">${esc(r.date||'')} &middot; filed ${esc(r.filed||'')} &middot; ruled ${esc(r.ruled||'')} &middot; via ${esc(r.via||'?')}</div>
       <div class="text">${esc(r.text)}</div>
       <span class="stamp ${r.decision}">${s.sym} ${r.decision.toUpperCase()}<small>${s.label}</small></span>
     </div>`;
   }).join('');
+  el.querySelectorAll('.docket').forEach(a => a.addEventListener('click', () => {
+    const url = location.origin + location.pathname + '#' + a.textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(() => {
+      const t = document.getElementById('copied');
+      t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1600);
+    });
+    light(a.textContent);
+  }));
+}
+
+function light(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  document.querySelectorAll('.entry.lit').forEach(x => x.classList.remove('lit'));
+  el.classList.add('lit');
+  const y = el.getBoundingClientRect().top + window.scrollY
+          - Math.max(24, (innerHeight - el.offsetHeight) / 2);
+  window.scrollTo(0, Math.max(0, y));
 }
 
 document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => {
@@ -154,6 +180,7 @@ fetch('data/rulings.json', {cache: 'no-store'})
     DATA = d;
     document.getElementById('upd').textContent = 'last sync ' + (d.updated || 'unknown');
     chips(); render();
+    if (location.hash) light(decodeURIComponent(location.hash.slice(1)));
   })
   .catch(() => {
     document.getElementById('docket').innerHTML =

@@ -53,17 +53,27 @@ def cast_call(sig, *args):
     return v
 
 
+def log(*a):
+    print(time.strftime("%Y-%m-%d %H:%M:%S"), *a, flush=True)
+
+
 def cast_send(sig, *args):
     with open(KEYFILE) as f:
         key = f.read().strip()
-    out = subprocess.run(
-        [CAST, "send", DOCKET, sig, *[str(a) for a in args],
-         "--rpc-url", RPC, "--private-key", key, "--json"],
-        capture_output=True, text=True, timeout=120)
-    if out.returncode != 0:
-        raise RuntimeError("cast send failed: %s" % out.stderr.strip()[:300])
-    receipt = json.loads(out.stdout)
-    return receipt.get("transactionHash", "?")
+    last = ""
+    for attempt in range(3):           # public RPCs race on nonces; retry
+        out = subprocess.run(
+            [CAST, "send", DOCKET, sig, *[str(a) for a in args],
+             "--rpc-url", RPC, "--private-key", key, "--json"],
+            capture_output=True, text=True, timeout=120)
+        if out.returncode == 0:
+            receipt = json.loads(out.stdout)
+            return receipt.get("transactionHash", "?")
+        last = out.stderr.strip()[:300]
+        if "nonce" not in last.lower() and attempt:
+            break
+        time.sleep(6)
+    raise RuntimeError("cast send failed: %s" % last)
 
 
 def device_ip():
@@ -111,7 +121,7 @@ def cycle():
         if ip is None:
             ip = device_ip()
             if not ip:
-                print("device unreachable; will retry")
+                log("device unreachable; will retry")
                 return
         vid = "%s-%d" % (TAG, i)
         st = device_get(ip, "/verify?id=" + vid)
@@ -120,30 +130,31 @@ def cycle():
                 {"token": DEVICE_TOKEN, "id": vid,
                  "kind": KIND_NAMES.get(kind, "")})
             resp = device_post(ip, "/verify?" + q, text)
-            print("filed matter %d on the device: %s" % (i, resp.strip()))
+            log("filed matter %d on the device: %s" % (i, resp.strip()))
         elif st.get("decision") in RULING_CODES:
             d = st["decision"]
             receipt = SITE + "#" + vid
             tx = cast_send("rule(uint256,uint8,string)",
                            i, RULING_CODES[d], receipt)
-            print("matter %d ruled %s on-chain: %s" % (i, d, tx))
+            log("matter %d ruled %s on-chain: %s" % (i, d, tx))
             try:
                 subprocess.run(["/bin/bash", PUBLISH], timeout=120,
                                capture_output=True)
-                print("public docket synced")
+                log("public docket synced")
             except Exception as e:
-                print("publish failed (will sync hourly anyway):", e)
+                log("publish failed (will sync hourly anyway):", e)
 
 
 def main():
     if not DOCKET:
         sys.exit("set OE_DOCKET to the VerifierDocket address")
     once = "--once" in sys.argv
+    log("oracle bridge up: docket %s rpc %s tag %s" % (DOCKET, RPC, TAG))
     while True:
         try:
             cycle()
         except Exception as e:
-            print("cycle error:", e)
+            log("cycle error:", e)
         if once:
             break
         time.sleep(POLL_S)

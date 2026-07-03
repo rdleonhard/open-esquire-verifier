@@ -50,6 +50,16 @@ h1{color:var(--gold);font-size:26px;letter-spacing:5px;margin:0}
 .entry .text{color:var(--white);font-size:14px;line-height:1.6;margin-top:10px;word-break:break-word}
 .kind{display:inline-block;border:1px solid var(--blue);color:var(--blue);border-radius:5px;
  font-size:10px;letter-spacing:1.5px;padding:2px 7px;margin-left:10px;vertical-align:1px}
+a.kind.chain{border-color:#8b9dff;color:#8b9dff;text-decoration:none}
+a.kind.chain:hover{background:#141a2e}
+.onchain{background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+ padding:16px 18px;margin:22px 0;font-size:12.5px;line-height:1.8}
+.onchain h3{color:var(--gold);font-size:12px;letter-spacing:2.5px;margin:0 0 10px}
+.onchain code{background:#0d1119;border:1px solid var(--line);border-radius:5px;
+ padding:2px 6px;color:var(--white);font-size:11.5px;word-break:break-all}
+.onchain a{color:#8b9dff;text-decoration:none}
+.onchain a:hover{text-decoration:underline}
+.onchain .lbl{color:var(--dim);letter-spacing:1px}
 .stamp{position:absolute;right:18px;top:50%;transform:translateY(-50%) rotate(-7deg);
  border:3px solid;border-radius:6px;padding:7px 12px;font-size:15px;font-weight:700;
  letter-spacing:3px;opacity:.92;background:rgba(0,0,0,.25)}
@@ -87,6 +97,25 @@ footer a{color:var(--gold-dim)}
 </div>
 
 <div class="chips" id="chips"></div>
+
+<div class="onchain">
+  <h3>ON-CHAIN DOCKET &middot; BASE MAINNET</h3>
+  <div><span class="lbl">DOCKET CONTRACT</span><br>
+    <a href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7"><code>0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7</code></a>
+    &nbsp;(<a href="https://base.blockscout.com/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7?tab=contract">verified source</a>)</div>
+  <div><span class="lbl">PAYMENT TOKEN (OED)</span><br>
+    <a href="https://basescan.org/address/0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a"><code>0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a</code></a></div>
+  <div style="margin-top:10px">
+    <span class="lbl">TO FILE A MATTER</span> &mdash; <code>approve</code> the docket for
+    10&nbsp;OED, then call <code>submit(kind, text)</code>
+    (kind: 0&nbsp;review &middot; 1&nbsp;citation &middot; 2&nbsp;characterization).
+    Your tokens sit in escrow while the attorney reviews on the hardware verifier;
+    a <b>VERIFIED</b> or <b>WRONG</b> ruling burns them, <b>DENIED</b> refunds you.
+    The ruling and this docket's receipt URL are recorded on-chain by
+    <code>MatterRuled</code>. Matters ruled on-chain carry a
+    <span style="color:#8b9dff">BASE&nbsp;MAINNET</span> badge below.
+  </div>
+</div>
 
 <div class="controls">
   <button class="fbtn on" data-f="all">ALL</button>
@@ -138,7 +167,9 @@ function render(){
   if (!rows.length){ el.innerHTML = '<div class="empty">No matters match.</div>'; return; }
   el.innerHTML = rows.map(r => {
     const s = STAMPS[r.decision] || {sym:'?', label:''};
-    const kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
+    let kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
+    if (r.id.startsWith('B8453-')) kind +=
+      `<a class="kind chain" href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">BASE MAINNET</a>`;
     return `<div class="entry" id="${esc(r.id)}">
       <a class="docket" href="#${esc(r.id)}" title="Permalink — click copies the receipt URL">${esc(r.id)}</a>${kind}
       <div class="meta">${esc(r.date||'')} &middot; filed ${esc(r.filed||'')} &middot; ruled ${esc(r.ruled||'')} &middot; via ${esc(r.via||'?')}</div>

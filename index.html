@@ -108,20 +108,29 @@ footer a{color:var(--gold-dim)}
 
 <div class="onchain">
   <h3>ON-CHAIN DOCKET &middot; BASE MAINNET</h3>
-  <div><span class="lbl">DOCKET CONTRACT</span><br>
-    <a href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7"><code>0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7</code></a>
-    &nbsp;(<a href="https://base.blockscout.com/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7?tab=contract">verified source</a>)</div>
+  <div><span class="lbl">DOCKET CONTRACT (VerifierDocketV2)</span><br>
+    <a href="https://basescan.org/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110"><code>0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110</code></a>
+    &nbsp;(<a href="https://base.blockscout.com/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110?tab=contract">verified source</a>)</div>
   <div><span class="lbl">PAYMENT TOKEN (OED)</span><br>
     <a href="https://basescan.org/address/0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a"><code>0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a</code></a></div>
   <div style="margin-top:10px">
-    <span class="lbl">TO FILE A MATTER</span> &mdash; <code>approve</code> the docket for
-    10&nbsp;OED, then call <code>submit(kind, text)</code>
-    (kind: 0&nbsp;review &middot; 1&nbsp;citation &middot; 2&nbsp;characterization).
-    Your tokens sit in escrow while the attorney reviews on the hardware verifier;
+    <span class="lbl">TO FILE A MATTER</span> &mdash; <code>approve</code> the docket for the
+    fee, then call <code>submit(kind, text)</code>. Fees:
+    <b>10&nbsp;OED</b> citation check (kind&nbsp;1) &middot;
+    <b>50&nbsp;OED</b> characterization review (kind&nbsp;2 &mdash; a
+    <b>WRONG</b> ruling must return the attorney's corrected characterization,
+    recorded on-chain and printed on this docket).
+    Your tokens sit in escrow while the attorney reviews;
     a <b>VERIFIED</b> or <b>WRONG</b> ruling burns them, <b>DENIED</b> refunds you.
-    The ruling and this docket's receipt URL are recorded on-chain by
-    <code>MatterRuled</code>. Matters ruled on-chain carry a
+    <b>Refund guarantee:</b> if no ruling is entered within <code>maxWaitS</code>
+    (30&nbsp;minutes), anyone may call <code>reclaim(id)</code> and the escrow
+    returns to the asker &mdash; trustlessly. Matters ruled on-chain carry a
     <span style="color:#8b9dff">BASE&nbsp;MAINNET</span> badge below.
+  </div>
+  <div style="margin-top:10px;font-size:11px">
+    <span class="lbl">PRIOR CONTRACT</span> &mdash; matters <code>B8453-*</code> were ruled on
+    <a href="https://base.blockscout.com/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">VerifierDocket&nbsp;V1</a>
+    (flat 10&nbsp;OED, retired 2026-07-08).
   </div>
 </div>
 
@@ -176,7 +185,9 @@ function render(){
   el.innerHTML = rows.map(r => {
     const s = STAMPS[r.decision] || {sym:'?', label:''};
     let kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
-    if (r.id.startsWith('B8453-')) kind +=
+    if (r.id.startsWith('OE8453-')) kind +=
+      `<a class="kind chain" href="https://basescan.org/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110">BASE MAINNET</a>`;
+    else if (r.id.startsWith('B8453-')) kind +=
       `<a class="kind chain" href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">BASE MAINNET</a>`;
     return `<div class="entry" id="${esc(r.id)}">
       <a class="docket" href="#${esc(r.id)}" title="Permalink — click copies the receipt URL">${esc(r.id)}</a>${kind}

@@ -16,7 +16,7 @@ CAST = os.path.expanduser("~/.foundry/bin/cast")
 RPC = os.environ.get("OE_RPC", "https://mainnet.base.org")
 KEYFILE = os.path.expanduser("~/.oe_verifier_deployer")
 SITE = "https://rdleonhard.github.io/open-esquire-verifier/"
-TAG = os.environ.get("OE_TAG", "B8453")
+TAG = os.environ.get("OE_TAG", "OE8453")   # V2-era ids; V1 used B8453-<n>
 DEPLOYED = os.path.join(os.path.dirname(__file__), "..", "chain", ".deployed")
 
 RULING_NAMES = {0: "pending", 1: "verified", 2: "denied", 3: "wrong"}

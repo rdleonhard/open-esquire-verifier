@@ -30,7 +30,8 @@ IP_CACHE = os.path.expanduser("~/.cyd_ip")
 PUBLISH = os.path.expanduser(
     "~/Library/Application Support/openesquire-docket/publish.sh")
 POLL_S = 30
-TAG = os.environ.get("OE_TAG", "B8453")   # device/receipt id prefix, per chain
+TAG = os.environ.get("OE_TAG", "")        # device/receipt id prefix; if unset,
+                                          # picked per contract version below
 # Auto-denial deadline: a matter pending longer than this is DENIED on-chain
 # (the asker is refunded) so nobody is left waiting on the attorney. Reads
 # the Chambers app's setting when present; OE_MAX_WAIT_MIN overrides; 0 off.
@@ -41,8 +42,36 @@ KIND_NAMES = {0: "", 1: "cite", 2: "char"}
 RULING_CODES = {"verified": 1, "denied": 2, "wrong": 3}
 CAST = os.path.expanduser("~/.foundry/bin/cast")
 
-MATTER_SIG = ("matters(uint256)"
-              "((address,uint96,uint64,uint64,uint8,uint8,string,string))")
+MATTER_SIG_V1 = ("matters(uint256)"
+                 "((address,uint96,uint64,uint64,uint8,uint8,string,string))")
+MATTER_SIG_V2 = ("matters(uint256)"
+                 "((address,uint96,uint64,uint64,uint8,uint8,string,string,"
+                 "string))")
+
+# Detected at startup: VerifierDocketV2 has per-kind pricing, a 4-arg rule()
+# carrying the attorney's corrected characterization, and trustless reclaim().
+V2 = False
+MATTER_SIG = MATTER_SIG_V1
+
+
+def detect_version():
+    global V2, MATTER_SIG, TAG
+    try:
+        cast_call("priceOf(uint8)(uint256)", 2)
+        V2 = True
+        MATTER_SIG = MATTER_SIG_V2
+    except Exception:
+        V2 = False
+        MATTER_SIG = MATTER_SIG_V1
+    if not TAG:
+        TAG = "OE8453" if V2 else "B8453"
+
+
+def send_rule(i, code, receipt, response=""):
+    if V2:
+        return cast_send("rule(uint256,uint8,string,string)",
+                         i, code, receipt, response)
+    return cast_send("rule(uint256,uint8,string)", i, code, receipt)
 
 
 def cast_call(sig, *args):
@@ -129,8 +158,7 @@ def max_wait_s():
 
 def auto_deny(i, vid, kind, text, filed_at):
     receipt = SITE + "#" + vid
-    tx = cast_send("rule(uint256,uint8,string)", i, RULING_CODES["denied"],
-                   receipt)
+    tx = send_rule(i, RULING_CODES["denied"], receipt)
     log("matter %d lapsed (past max wait): auto-DENIED, refunded: %s"
         % (i, tx))
     _log_chambers(vid, kind, text, filed_at, tx)
@@ -197,9 +225,15 @@ def cycle():
         if st and st.get("decision") in RULING_CODES:
             # the attorney's ruling beats the clock, even past the deadline
             d = st["decision"]
+            if V2 and kind == 2 and d == "wrong":
+                # V2 requires the corrected characterization with a char
+                # WRONG ruling — the device tap can't compose one; the
+                # matter stays pending for Chambers (and its rewrite editor)
+                log("matter %d: char WRONG needs a rewrite — rule it from "
+                    "Chambers; leaving pending" % i)
+                continue
             receipt = SITE + "#" + vid
-            tx = cast_send("rule(uint256,uint8,string)",
-                           i, RULING_CODES[d], receipt)
+            tx = send_rule(i, RULING_CODES[d], receipt)
             log("matter %d ruled %s on-chain: %s" % (i, d, tx))
             _publish()
         elif expired:
@@ -219,7 +253,9 @@ def main():
     if not DOCKET:
         sys.exit("set OE_DOCKET to the VerifierDocket address")
     once = "--once" in sys.argv
-    log("oracle bridge up: docket %s rpc %s tag %s" % (DOCKET, RPC, TAG))
+    detect_version()
+    log("oracle bridge up: docket %s (%s) rpc %s tag %s"
+        % (DOCKET, "V2" if V2 else "V1", RPC, TAG))
     while True:
         try:
             cycle()

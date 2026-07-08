@@ -38,9 +38,11 @@ MAX_CITES = 8
 # and the attorney sees that.
 _REPORTER = (
     r"(?:U\.\s?S\.|S\.\s?Ct\.|L\.\s?Ed\.(?:\s?2d)?|"
-    r"F\.(?:\s?(?:2d|3d|4th))?|F\.\s?Supp\.(?:\s?(?:2d|3d))?|"
+    r"F\.(?:\s?(?:2d|3d|4th|5th|6th|7th|8th|9th))?|"
+    r"F\.\s?Supp\.(?:\s?(?:2d|3d|4th))?|"
     r"F\.\s?App'?x\.?|B\.R\.|Fed\.\s?Cl\.|"
-    r"[A-Z]{1,4}\.?(?:\s?[A-Z][a-z]{0,4}\.?){0,2}\s?(?:2d|3d|4th|5th)?\.?)"
+    r"[A-Z]{1,4}\.?(?:\s?[A-Z][a-z]{0,4}\.?){0,2}"
+    r"\s?(?:2d|3d|4th|5th|6th|7th|8th|9th)?\.?)"
 )
 CITE_RE = re.compile(r"\b(\d{1,4})\s+(" + _REPORTER + r")\s+(\d{1,5})\b")
 
@@ -104,6 +106,23 @@ def _lookup_token(text, tok):
             "detail": row.get("error_message", ""),
             "cases": [_case(c) for c in clusters[:3]],
         })
+    # eyecite silently skips reporters it doesn't know — and a nonexistent
+    # reporter series ("999 F.9th 123") is the classic hallucination tell.
+    # Cross-check against our own extraction and flag anything it missed.
+    def _norm(c):
+        return re.sub(r"[\s.]", "", c).lower()
+    seen = {_norm(c["cite"]) for c in citations}
+    for row in rows:
+        for n in row.get("normalized_citations") or []:
+            seen.add(_norm(n))
+    for cite in extract_citations(text):
+        if _norm(cite) not in seen:
+            citations.append({
+                "cite": cite, "status": "not_found",
+                "detail": "reporter not recognized by CourtListener — "
+                          "no such reporter series; likely fabricated",
+                "cases": [],
+            })
     return {"mode": "token", "citations": citations, "note": ""}
 
 

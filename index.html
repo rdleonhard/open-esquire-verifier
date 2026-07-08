@@ -96,6 +96,8 @@ footer a{color:var(--gold-dim)}
   <b class="d">&#8856; DENIED</b> &mdash; the attorney declines the question (asker refunded).
 </div>
 
+<div class="intro" id="policy" style="display:none"></div>
+
 <div class="chips" id="chips"></div>
 
 <div class="onchain">
@@ -204,6 +206,23 @@ document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => {
 document.getElementById('q').addEventListener('input', e => {
   Q = e.target.value.trim().toLowerCase(); render();
 });
+
+// session hours + auto-refund policy, published from Chambers (optional)
+fetch('data/policy.json', {cache: 'no-store'})
+  .then(r => r.ok ? r.json() : null)
+  .then(p => {
+    if (!p || !p.hours_text) return;
+    const el = document.getElementById('policy');
+    const mins = Number(p.auto_deny_minutes || 0);
+    el.innerHTML = '<b style="letter-spacing:2px">SESSION HOURS</b> &mdash; ' +
+      'the attorney is at the bench <b>' + p.hours_text + '</b>.' +
+      (mins ? ' Matters not ruled on within <b>' + mins +
+        ' minutes</b> of filing are automatically <b class="d">DENIED</b>' +
+        ' and the escrow is <b>refunded in full</b> &mdash; you are never' +
+        ' left waiting.' : '');
+    el.style.display = '';
+  })
+  .catch(() => {});
 
 fetch('data/rulings.json', {cache: 'no-store'})
   .then(r => r.json())

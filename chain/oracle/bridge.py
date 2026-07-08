@@ -31,6 +31,11 @@ PUBLISH = os.path.expanduser(
     "~/Library/Application Support/openesquire-docket/publish.sh")
 POLL_S = 30
 TAG = os.environ.get("OE_TAG", "B8453")   # device/receipt id prefix, per chain
+# Auto-denial deadline: a matter pending longer than this is DENIED on-chain
+# (the asker is refunded) so nobody is left waiting on the attorney. Reads
+# the Chambers app's setting when present; OE_MAX_WAIT_MIN overrides; 0 off.
+CHAMBERS_SETTINGS = os.path.expanduser(
+    "~/Library/Application Support/openesquire-chambers/settings.json")
 
 KIND_NAMES = {0: "", 1: "cite", 2: "char"}
 RULING_CODES = {"verified": 1, "denied": 2, "wrong": 3}
@@ -109,40 +114,105 @@ def _num(v):
     return int(v, 0) if isinstance(v, str) else int(v)
 
 
+def max_wait_s():
+    m = None
+    if os.environ.get("OE_MAX_WAIT_MIN"):
+        m = float(os.environ["OE_MAX_WAIT_MIN"])
+    else:
+        try:
+            with open(CHAMBERS_SETTINGS) as f:
+                m = float(json.load(f).get("auto_deny_minutes", 30))
+        except Exception:
+            m = 30.0
+    return 0 if m <= 0 else m * 60
+
+
+def auto_deny(i, vid, kind, text, filed_at):
+    receipt = SITE + "#" + vid
+    tx = cast_send("rule(uint256,uint8,string)", i, RULING_CODES["denied"],
+                   receipt)
+    log("matter %d lapsed (past max wait): auto-DENIED, refunded: %s"
+        % (i, tx))
+    _log_chambers(vid, kind, text, filed_at, tx)
+
+
+def _log_chambers(vid, kind, text, filed_at, tx):
+    """Record the lapse-denial in the Chambers ruling log so the public
+    docket receipt URL resolves to a real entry."""
+    try:
+        path = os.path.expanduser(
+            "~/Library/Application Support/openesquire-chambers/rulings.jsonl")
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        now = time.time()
+        rec = {"id": vid, "kind": KIND_NAMES.get(kind, ""), "text": text,
+               "decision": "denied", "via": "auto",
+               "filed": time.strftime("%H:%M:%S", time.localtime(filed_at)),
+               "ruled": time.strftime("%H:%M:%S", time.localtime(now)),
+               "date": time.strftime("%Y-%m-%d", time.localtime(now)),
+               "chain": True, "tx": tx}
+        with open(path, "a") as f:
+            f.write(json.dumps(rec) + "\n")
+    except Exception as e:
+        log("could not log lapse locally (chain is authoritative):", e)
+
+
+def _publish():
+    try:
+        subprocess.run(["/bin/bash", PUBLISH], timeout=120,
+                       capture_output=True)
+        log("public docket synced")
+    except Exception as e:
+        log("publish failed (will sync hourly anyway):", e)
+
+
 def cycle():
     n = _num(cast_call("count()(uint256)"))
     ip = None
+    dev_ok = True          # stop poking the device after the first failure
+    wait = max_wait_s()
+    now = time.time()
     for i in range(int(n)):
         m = cast_call(MATTER_SIG, i)
         # tuple: (asker, paid, filedAt, ruledAt, ruling, kind, text, receipt)
         ruling, kind, text = _num(m[4]), _num(m[5]), m[6]
         if ruling != 0:                      # already ruled on-chain
             continue
-        if ip is None:
-            ip = device_ip()
-            if not ip:
-                log("device unreachable; will retry")
-                return
         vid = "%s-%d" % (TAG, i)
-        st = device_get(ip, "/verify?id=" + vid)
-        if st.get("unknown"):
-            q = urllib.parse.urlencode(
-                {"token": DEVICE_TOKEN, "id": vid,
-                 "kind": KIND_NAMES.get(kind, "")})
-            resp = device_post(ip, "/verify?" + q, text)
-            log("filed matter %d on the device: %s" % (i, resp.strip()))
-        elif st.get("decision") in RULING_CODES:
+        expired = bool(wait) and (now - _num(m[2])) > wait
+
+        st = None
+        if dev_ok:
+            if ip is None:
+                ip = device_ip()
+                if not ip:
+                    dev_ok = False
+                    log("device unreachable; deadlines still enforced")
+            if ip:
+                try:
+                    st = device_get(ip, "/verify?id=" + vid)
+                except Exception as e:
+                    dev_ok = False
+                    log("device error (%s); deadlines still enforced" % e)
+
+        if st and st.get("decision") in RULING_CODES:
+            # the attorney's ruling beats the clock, even past the deadline
             d = st["decision"]
             receipt = SITE + "#" + vid
             tx = cast_send("rule(uint256,uint8,string)",
                            i, RULING_CODES[d], receipt)
             log("matter %d ruled %s on-chain: %s" % (i, d, tx))
-            try:
-                subprocess.run(["/bin/bash", PUBLISH], timeout=120,
-                               capture_output=True)
-                log("public docket synced")
-            except Exception as e:
-                log("publish failed (will sync hourly anyway):", e)
+            _publish()
+        elif expired:
+            # pending too long: DENY (= refund the asker) per posted policy;
+            # runs whether or not the device answered
+            auto_deny(i, vid, kind, text, _num(m[2]))
+            _publish()
+        elif st and st.get("unknown"):
+            q = urllib.parse.urlencode(
+                {"token": DEVICE_TOKEN, "id": vid,
+                 "kind": KIND_NAMES.get(kind, "")})
+            resp = device_post(ip, "/verify?" + q, text)
+            log("filed matter %d on the device: %s" % (i, resp.strip()))
 
 
 def main():

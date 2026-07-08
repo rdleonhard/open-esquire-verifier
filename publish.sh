@@ -78,12 +78,13 @@ else:
     print("merged: %d new, %d total" % (added, len(rulings)))
 EOF
 
-if git diff --quiet -- data/rulings.json; then
+# stage the ledger + the session-hours policy Chambers writes (may be new)
+git add data/rulings.json
+[ -f data/policy.json ] && git add data/policy.json
+if git diff --cached --quiet; then
   echo "no new rulings; nothing to publish"
   exit 0
 fi
-
-git add data/rulings.json
 git commit -m "docket sync: $(date '+%Y-%m-%d %H:%M')" -m "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>" >/dev/null
 if [ "${1:-}" != "--no-push" ]; then
   git push

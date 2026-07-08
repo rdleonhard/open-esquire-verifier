@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Open Esquire — Chambers</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+
+<header class="letterhead">
+  <div class="rule-top"></div>
+  <div class="wordmark">
+    <span class="dia">&#9670;</span>
+    <h1>OPEN&nbsp;ESQUIRE</h1>
+    <span class="dia">&#9670;</span>
+  </div>
+  <div class="subtitle">CHAMBERS &mdash; VERIFICATION BENCH</div>
+  <div class="rule-bottom"><span class="dia-small">&#9670;</span></div>
+  <div id="chainchip" class="chainchip">CONNECTING TO BASE&hellip;</div>
+  <div id="session" class="session-strip"></div>
+</header>
+
+<div class="capacity-bar" title="Click for the full terms" onclick="toggleTerms()">
+  PERSONAL SCHOLARLY ATTESTATION &nbsp;&middot;&nbsp; NOT LEGAL ADVICE
+  &nbsp;&middot;&nbsp; NO ATTORNEY&ndash;CLIENT RELATIONSHIP IS FORMED
+  <span class="terms-link">FULL TERMS &#9662;</span>
+</div>
+<div id="terms" class="terms hidden"></div>
+
+<main>
+  <section class="col-docket">
+    <div class="panel">
+      <div class="panel-title">MATTERS ON THE DOCKET
+        <button class="mini" onclick="refresh()" id="refreshbtn">REFRESH</button>
+      </div>
+      <div id="docket" class="docket-list"><div class="empty">THE DOCKET IS CLEAR</div></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">FILE A PRACTICE MATTER <span class="tag tag-practice">OFF-CHAIN</span></div>
+      <div class="practice-form">
+        <select id="p-kind">
+          <option value="cite">CITATION</option>
+          <option value="char">CHARACTERIZATION</option>
+        </select>
+        <textarea id="p-text" rows="3" placeholder="Paste the AI's claim of authority&hellip;"></textarea>
+        <button class="gold" onclick="filePractice()">FILE ON THE DOCKET</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">SESSION HOURS
+        <button class="mini" id="hoursbtn" onclick="toggleHours()">EDIT</button></div>
+      <div id="hours-view" class="hours-view"></div>
+      <div id="hours-edit" class="hidden">
+        <div id="hours-days"></div>
+        <div class="hours-deadline">
+          AUTO-REFUND UNANSWERED MATTERS AFTER
+          <input type="number" id="s-deadline" min="0" max="1440" step="1"> MIN
+          <span class="rw-hint">0 disables; applies in and out of session</span>
+        </div>
+        <button class="gold" onclick="saveSettings()">ADOPT HOURS</button>
+        <span id="hours-msg" class="pubmsg"></span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">VERIFIER RECORD <span class="tag tag-chain">PUBLIC &middot; ON-CHAIN</span></div>
+      <div id="reputation" class="rep"></div>
+      <div class="rep-note">A record of verification work, not an advertisement
+        of legal services. The verifier acts personally, not as counsel.</div>
+      <button class="mini" onclick="publish()" id="publishbtn">SYNC PUBLIC DOCKET</button>
+      <span id="publishmsg" class="pubmsg"></span>
+    </div>
+  </section>
+
+  <section class="col-matter">
+    <div class="panel" id="matterpanel">
+      <div class="panel-title" id="m-title">MATTER FOR REVIEW</div>
+      <div id="m-empty" class="empty tall">SELECT A MATTER FROM THE DOCKET</div>
+
+      <div id="m-body" class="hidden">
+        <div class="m-meta" id="m-meta"></div>
+        <div class="m-text" id="m-text"></div>
+
+        <div class="authority">
+          <button class="blue" id="lookupbtn" onclick="lookup()">PULL CITED AUTHORITY &mdash; COURTLISTENER</button>
+          <div id="cl-note" class="cl-note"></div>
+          <div id="cl-results"></div>
+        </div>
+
+        <div id="rewrite" class="rewrite hidden">
+          <div class="rw-label">CORRECTED CHARACTERIZATION
+            <span class="rw-hint">returned to the requester; the capacity terms are appended automatically</span></div>
+          <textarea id="rw-text" rows="6"
+            placeholder="Rewrite the characterization so it fairly reads the cited authority&hellip;"></textarea>
+        </div>
+
+        <div class="bench">
+          <button class="bench-btn b-ver" onclick="openRule('verified')">
+            <span class="glyph">&#10003;</span>VERIFIED</button>
+          <button class="bench-btn b-den" onclick="openRule('denied')">
+            <span class="glyph">&#8856;</span>DENIED</button>
+          <button class="bench-btn b-wrg" onclick="openRule('wrong')">
+            <span class="glyph">&#10007;</span>WRONG</button>
+        </div>
+        <div class="bench-legend">
+          VERIFIED / WRONG &rarr; escrow is <b>burned</b> &nbsp;&middot;&nbsp;
+          DENIED &rarr; the asker is <b>refunded</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">RULINGS ENTERED IN CHAMBERS</div>
+      <div id="history" class="history"><div class="empty">NO RULINGS YET</div></div>
+    </div>
+  </section>
+</main>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="modal-title">ENTER RULING</div>
+    <div id="modal-verdict" class="modal-verdict"></div>
+    <div id="modal-consequence" class="modal-consequence"></div>
+    <label class="attest">
+      <input type="checkbox" id="attest">
+      I enter this ruling <b>personally and not in my capacity as an attorney
+      for any party</b>. I am not giving legal advice; no attorney&ndash;client
+      relationship or privilege is formed with the requester or anyone else,
+      and the capacity terms will be embedded in the ruling record.
+    </label>
+    <div class="modal-actions">
+      <button class="mini" onclick="closeModal()">WITHDRAW</button>
+      <button class="gold" id="soorder" onclick="confirmRule()">SO ORDER IT</button>
+    </div>
+    <div id="modal-err" class="modal-err"></div>
+  </div>
+</div>
+
+<footer>
+  OPEN ESQUIRE &middot; CHAMBERS <span class="dia-small">&#9670;</span>
+  ESCROW ON BASE MAINNET <span class="dia-small">&#9670;</span>
+  AUTHORITY VIA COURTLISTENER / FREE LAW PROJECT
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

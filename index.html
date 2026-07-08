@@ -48,6 +48,12 @@ h1{color:var(--gold);font-size:26px;letter-spacing:5px;margin:0}
 .copied.show{opacity:1}
 .entry .meta{color:var(--dim);font-size:11px;margin-top:3px;letter-spacing:1px}
 .entry .text{color:var(--white);font-size:14px;line-height:1.6;margin-top:10px;word-break:break-word}
+.entry .response{border-left:3px solid var(--gold-dim);background:#12100b;border-radius:0 6px 6px 0;
+ color:var(--gray);font-size:13px;line-height:1.65;margin-top:12px;padding:10px 14px;white-space:pre-wrap}
+.entry .response .rlabel{display:block;color:var(--gold);font-size:10px;letter-spacing:2px;margin-bottom:7px}
+.record{display:flex;gap:22px;flex-wrap:wrap;margin-top:10px}
+.record .cell .k{color:var(--dim);font-size:10px;letter-spacing:1.5px}
+.record .cell .v2{color:var(--white);font-size:15px}
 .kind{display:inline-block;border:1px solid var(--blue);color:var(--blue);border-radius:5px;
  font-size:10px;letter-spacing:1.5px;padding:2px 7px;margin-left:10px;vertical-align:1px}
 a.kind.chain{border-color:#8b9dff;color:#8b9dff;text-decoration:none}
@@ -174,8 +180,11 @@ function render(){
       `<a class="kind chain" href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">BASE MAINNET</a>`;
     return `<div class="entry" id="${esc(r.id)}">
       <a class="docket" href="#${esc(r.id)}" title="Permalink — click copies the receipt URL">${esc(r.id)}</a>${kind}
-      <div class="meta">${esc(r.date||'')} &middot; filed ${esc(r.filed||'')} &middot; ruled ${esc(r.ruled||'')} &middot; via ${esc(r.via||'?')}</div>
+      <div class="meta">${esc(r.date||'')} &middot; filed ${esc(r.filed||'')} &middot; ruled ${esc(r.ruled||'')}
+        &middot; via ${r.via==='auto' ? 'deadline (lapsed &mdash; refunded in full)' : esc(r.via||'?')}</div>
       <div class="text">${esc(r.text)}</div>
+      ${r.response ? `<div class="response"><span class="rlabel">CORRECTED CHARACTERIZATION
+        &mdash; RETURNED TO THE ASKER</span>${esc(r.response)}</div>` : ''}
       <span class="stamp ${r.decision}">${s.sym} ${r.decision.toUpperCase()}<small>${s.label}</small></span>
     </div>`;
   }).join('');
@@ -214,12 +223,32 @@ fetch('data/policy.json', {cache: 'no-store'})
     if (!p || !p.hours_text) return;
     const el = document.getElementById('policy');
     const mins = Number(p.auto_deny_minutes || 0);
-    el.innerHTML = '<b style="letter-spacing:2px">SESSION HOURS</b> &mdash; ' +
+    let html = '<b style="letter-spacing:2px">SESSION HOURS</b> &mdash; ' +
       'the attorney is at the bench <b>' + p.hours_text + '</b>.' +
       (mins ? ' Matters not ruled on within <b>' + mins +
         ' minutes</b> of filing are automatically <b class="d">DENIED</b>' +
         ' and the escrow is <b>refunded in full</b> &mdash; you are never' +
         ' left waiting.' : '');
+    const rec = p.record;
+    if (rec && rec.ruled) {
+      const t = Number(rec.median_turnaround_s || 0);
+      const turn = t ? (t < 3600 ? Math.round(t / 60) + ' min'
+                                 : (t / 3600).toFixed(1) + ' h') : '&mdash;';
+      html += '<div class="record">' +
+        '<span class="cell"><span class="k">MATTERS RULED ON-CHAIN</span><br>' +
+          '<span class="v2">' + rec.ruled + '</span></span>' +
+        '<span class="cell"><span class="k">VERIFIED / WRONG / DENIED</span><br>' +
+          '<span class="v2">' + rec.verified + ' / ' + rec.wrong + ' / ' + rec.denied + '</span></span>' +
+        '<span class="cell"><span class="k">TOKENS BURNED</span><br>' +
+          '<span class="v2">' + Math.round(Number(rec.burned || 0) / 1e18) + ' OED</span></span>' +
+        '<span class="cell"><span class="k">MEDIAN TURNAROUND</span><br>' +
+          '<span class="v2">' + turn + '</span></span></div>' +
+        '<div style="margin-top:8px;font-size:11px;color:var(--dim)">' +
+        'A record of verification work, not an advertisement of legal services. ' +
+        'The verifier acts personally, not as counsel; no attorney&ndash;client ' +
+        'relationship is formed with any asker.</div>';
+    }
+    el.innerHTML = html;
     el.style.display = '';
   })
   .catch(() => {});

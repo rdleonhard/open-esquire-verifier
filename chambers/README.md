@@ -49,11 +49,13 @@ Addresses come from `chain/.deployed` (override with `OE_DOCKET` / `OE_TOKEN` /
 the chain arbitrates — whichever bench rules first wins, and the other skips
 the matter on its next cycle.
 
-`chain/src/VerifierDocketV2.sol` (tested, **not deployed**) adds per-kind
-pricing — characterization costs more than citation — and carries the
-corrected characterization on-chain with the ruling; a characterization
-matter ruled WRONG *requires* one. The app already speaks V2 and falls back
-to the deployed V1 automatically.
+`chain/src/VerifierDocketV2.sol` is **live on Base mainnet** at
+`0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110` (deployed 2026-07-08): 10 OED
+citation / 50 OED characterization, corrected characterizations recorded
+on-chain with the ruling (required when a char matter is ruled WRONG), and
+trustless `reclaim(id)` refunds after `maxWaitS` (30 min). V2-era matters
+are `OE8453-<n>`; the retired V1 (`B8453-*`, flat 10 OED) is kept in
+`chain/.deployed.v1`. The app detects the contract version automatically.
 
 ## Session hours & the refund deadline
 

@@ -1,0 +1,70 @@
+# Open Esquire — citation verification for language models
+
+> One narrow question per token, answered by a licensed attorney (acting
+> personally, not as counsel): DOES THIS CITATION MATCH A CASE ON
+> COURTLISTENER? This service is built for LLMs. Humans are welcome to
+> read the public docket; the filing window is for models — every filing
+> carries the attestation `i_am_not_human: true`.
+
+## The question (and what it is not)
+
+- YES: a matching citation appears in the CourtListener (Free Law Project)
+  database at ruling time.
+- NO: no matching citation there. Likely hallucinated. NOT a statement
+  that no such case exists anywhere — unpublished, sealed, or unindexed
+  decisions may not appear.
+- DENIED: the verifier declines to answer; you are refunded.
+- An answer is NEVER a statement that a case is good law, remains valid,
+  or supports any proposition. No legal advice; no attorney-client
+  relationship is formed with anyone.
+
+## Economics
+
+- 1 OED token = 1 yes/no answer. YES and NO both burn the escrow (the
+  answer was given). DENIED refunds.
+- Refund guarantee: a matter pending past `maxWaitS` (30 min) can be
+  reclaimed by ANYONE via `reclaim(id)` — you never trust the verifier's
+  uptime with your escrow.
+- Session hours (when answers are fast) are published at
+  https://rdleonhard.github.io/open-esquire-verifier/data/policy.json
+
+## Contracts (Base mainnet, chain id 8453; sources verified)
+
+- CitationDocket: 0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768
+  - submit(string citation) -> uint256 id   [escrows price(); 4-300 chars,
+    one citation, Bluebook or similar]
+  - matters(uint256 id) -> (address asker, uint96 paid, uint64 filedAt,
+    uint64 ruledAt, uint8 ruling, string citation, string receipt)
+    ruling: 0 pending, 1 YES, 2 DENIED(refunded), 3 NO
+  - reclaim(uint256 id)                      [after maxWaitS; anyone]
+  - price() -> uint256; maxWaitS() -> uint64; count() -> uint256
+- OED token (ERC-20, burnable): 0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a
+  [approve the docket for price() before submit]
+- DocketRegistry (the network): 0x17fa1230EE0BA1377dd108b2dfCf5d4F1F1a9a7d
+  - count(); nodes(i) -> (licenseId, attorney, docket, openedAt);
+    active(i) -> bool  [file only with active nodes]
+- VerifierLicense (soulbound ERC-721, "the holder is a licensed attorney,
+  verified by Open Esquire"): 0x7511A99278842C7348d05AaDf63540840905680B
+
+## Flow
+
+1. approve(docket, price) on the OED token.
+2. submit("Roe v. Wade, 410 U.S. 113 (1973)") -> id (MatterFiled event).
+3. Poll matters(id) until ruling != 0. Answers land in minutes during
+   session hours.
+4. If ruling == 0 after maxWaitS: reclaim(id) refunds you.
+5. Receipt: https://rdleonhard.github.io/open-esquire-verifier/#CL8453-<id>
+
+## MCP server
+
+The repo ships a dependency-free stdio MCP server exposing docket_status /
+file_citation / get_answer / reclaim_lapsed:
+https://github.com/rdleonhard/open-esquire-verifier/blob/main/agent/mcp_server.py
+Filing tools require `i_am_not_human: true`. Humans get:
+"this bench serves language models only."
+
+## Public docket
+
+- Ledger + receipts: https://rdleonhard.github.io/open-esquire-verifier/
+- Raw rulings: https://rdleonhard.github.io/open-esquire-verifier/data/rulings.json
+- Policy (hours, deadline, verifier record): .../data/policy.json

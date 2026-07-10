@@ -1,17 +1,21 @@
 # Open Esquire — Chambers
 
-The attorney's Mac verification bench. Where the CYD device is the courtroom,
-this is chambers: pending matters from the Base-mainnet VerifierDocket appear
-on the docket, cited authority is pulled from CourtListener, and the attorney
-rules — VERIFIED / DENIED / WRONG — with the escrow burn or refund posted
-on-chain from the app. Characterization matters carry a higher fee and, when
-ruled WRONG, must return a corrected characterization to the asker.
+The verifier's Mac bench. One narrow, durable question per token:
+**does this citation match a case on CourtListener?** Matters from the
+Base-mainnet CitationDocket appear on the docket, the lookup runs
+automatically, and the verifier answers — **YES / DENIED / NO** — with the
+escrow burn (answered) or refund (denied) posted on-chain from the app.
+1 OED = 1 answer.
+
+The claim is deliberately narrow and never goes stale: it is NOT a
+good-law opinion (case law changes constantly), NOT a statement that a
+case exists nowhere (unpublished/sealed decisions may not be indexed) —
+only whether the citation resolves on CourtListener at ruling time.
 
 **Capacity terms are structural, not decorative:** a persistent banner, a
-required per-ruling attestation, and the full terms embedded verbatim in every
-ruling record and appended to every corrected characterization — the attorney
-acts personally, gives no legal advice, and forms no attorney-client
-relationship with anyone.
+required per-ruling attestation, and the narrow-attestation terms embedded
+verbatim in every ruling record — the verifier acts personally, gives no
+legal advice, and forms no attorney-client relationship with anyone.
 
 ## Run
 
@@ -49,13 +53,14 @@ Addresses come from `chain/.deployed` (override with `OE_DOCKET` / `OE_TOKEN` /
 the chain arbitrates — whichever bench rules first wins, and the other skips
 the matter on its next cycle.
 
-`chain/src/VerifierDocketV2.sol` is **live on Base mainnet** at
-`0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110` (deployed 2026-07-08): 10 OED
-citation / 50 OED characterization, corrected characterizations recorded
-on-chain with the ruling (required when a char matter is ruled WRONG), and
-trustless `reclaim(id)` refunds after `maxWaitS` (30 min). V2-era matters
-are `OE8453-<n>`; the retired V1 (`B8453-*`, flat 10 OED) is kept in
-`chain/.deployed.v1`. The app detects the contract version automatically.
+`chain/src/CitationDocket.sol` is **live on Base mainnet** at
+`0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768` (deployed 2026-07-09):
+`submit(citation)` escrows 1 OED (300-char cap), YES/NO burn it, DENIED
+refunds, and trustless `reclaim(id)` refunds after `maxWaitS` (30 min).
+V3-era matters are `CL8453-<n>`. Retired: V2 (`OE8453-*`, per-kind 10/50,
+in `.deployed.v2`) and V1 (`B8453-*`, flat 10, in `.deployed.v1`) — both
+still have their escrow semantics; V2 has reclaim, V1 does not. The app
+detects the contract version automatically.
 
 ## Session hours & the refund deadline
 

@@ -72,6 +72,20 @@ _announced = set()          # chain matters we've notified about
 _warned = set()             # chain matters past the lapse warning
 
 
+def _lookup_hint(text):
+    """Pre-answer for the arrival notification: what CourtListener says."""
+    try:
+        cites = courtlistener.lookup(text).get("citations", [])
+        if not cites:
+            return " — CL: no citation recognized"
+        c = cites[0]
+        name = c["cases"][0]["name"] if c.get("cases") else ""
+        return " — CL: %s%s" % (c["status"].upper().replace("_", " "),
+                                " (%s)" % name if name else "")
+    except Exception:
+        return ""
+
+
 def watchdog():
     """Auto-deny (= refund) anything pending past the deadline, so the asker
     is never left waiting, and notify the bench when matters arrive or are
@@ -111,9 +125,10 @@ def _watch_once():
     for m in docket.pending():
         if m["id"] not in _announced:
             _announced.add(m["id"])
-            notify_mac("Open Esquire — matter filed",
-                       "%s (%s, escrow %.0f OED): %s"
-                       % (m["id"], m["kind"], m["paid"] / 1e18, m["text"]))
+            notify_mac("Open Esquire — citation filed",
+                       "%s (%.0f OED): %s%s"
+                       % (m["id"], m["paid"] / 1e18, m["text"],
+                          _lookup_hint(m["text"])))
         if cutoff is None:
             continue
         left = m["filedAt"] - cutoff
@@ -187,12 +202,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json(courtlistener.lookup(body.get("text", "")))
         if path == "/api/practice":
             body = self._body()
-            kind = body.get("kind", "cite")
             text = (body.get("text") or "").strip()
-            if kind not in ("cite", "char") or not text:
-                return self._json({"error": "kind cite|char and text "
-                                            "required"}, 400)
-            return self._json(store.file_practice(kind, text))
+            if not text:
+                return self._json({"error": "citation text required"}, 400)
+            return self._json(store.file_practice("cite", text))
         if path == "/api/rule":
             return self._rule()
         if path == "/api/publish":
@@ -230,10 +243,6 @@ class Handler(BaseHTTPRequestHandler):
             if not m:
                 return self._json({"error": "matter %s is not pending "
                                             "(refresh?)" % mid}, 409)
-            if m["kind"] == "char" and decision == "wrong" and not response:
-                return self._json(
-                    {"error": "a corrected characterization is required to "
-                              "rule a characterization matter WRONG"}, 400)
             receipt = chain.SITE + "#" + mid
             tx = docket.rule(m["chain_id"], decision, receipt,
                              response=response)

@@ -16,7 +16,7 @@ CAST = os.path.expanduser("~/.foundry/bin/cast")
 RPC = os.environ.get("OE_RPC", "https://mainnet.base.org")
 KEYFILE = os.path.expanduser("~/.oe_verifier_deployer")
 SITE = "https://rdleonhard.github.io/open-esquire-verifier/"
-TAG = os.environ.get("OE_TAG", "OE8453")   # V2-era ids; V1 used B8453-<n>
+TAG = os.environ.get("OE_TAG", "CL8453")   # V3 era; V2 used OE8453, V1 B8453
 DEPLOYED = os.path.join(os.path.dirname(__file__), "..", "chain", ".deployed")
 
 RULING_NAMES = {0: "pending", 1: "verified", 2: "denied", 3: "wrong"}
@@ -28,6 +28,9 @@ MATTER_SIG = ("matters(uint256)"
 MATTER_SIG_V2 = ("matters(uint256)"
                  "((address,uint96,uint64,uint64,uint8,uint8,string,string,"
                  "string))")
+# V3 (CitationDocket): no kind byte — one citation, one yes/no answer
+MATTER_SIG_V3 = ("matters(uint256)"
+                 "((address,uint96,uint64,uint64,uint8,string,string))")
 
 
 def addresses():
@@ -66,7 +69,8 @@ class Docket:
         self.token, self.docket = addresses()
         self.matters = []
         self.price = 0
-        self.price_char = 0          # V2 only; == price on V1
+        self.price_char = 0          # V2 only; == price otherwise
+        self.version = 0             # 1 / 2 / 3, detected on refresh
         self.v2 = False
         self.attorney = ""
         self.supply = 0
@@ -82,23 +86,44 @@ class Docket:
         self.refreshed = time.time()
         return self
 
+    def _detect(self):
+        """V2 has priceOf(); V3 (CitationDocket) has maxWaitS but no
+        priceOf; V1 has neither."""
+        try:
+            self.price_char = _num(
+                _cast_call(self.docket, "priceOf(uint8)(uint256)", 2))
+            self.version = 2
+            return
+        except Exception:
+            pass
+        try:
+            _cast_call(self.docket, "maxWaitS()(uint64)")
+            self.version = 3
+        except Exception:
+            self.version = 1
+
     def _refresh(self):
         self.attorney = _cast_call(self.docket, "attorney()(address)")
         self.price = _num(_cast_call(self.docket, "price()(uint256)"))
-        try:                                 # V2: per-kind pricing
-            self.price_char = _num(
-                _cast_call(self.docket, "priceOf(uint8)(uint256)", 2))
-            self.v2 = True
-        except Exception:
+        if not self.version:
+            self._detect()
+        self.v2 = self.version == 2
+        if not self.v2:
             self.price_char = self.price
-            self.v2 = False
         self.supply = _num(
             _cast_call(self.token, "totalSupply()(uint256)"))
         n = _num(_cast_call(self.docket, "count()(uint256)"))
-        sig = MATTER_SIG_V2 if self.v2 else MATTER_SIG
+        sig = {2: MATTER_SIG_V2, 3: MATTER_SIG_V3}.get(
+            self.version, MATTER_SIG)
         matters = []
         for i in range(n):
             m = _cast_call(self.docket, sig, i)
+            if self.version == 3:      # no kind byte, no response
+                kind, text, receipt, response = "cite", m[5], m[6], ""
+            else:
+                kind = KIND_NAMES.get(_num(m[5]), "?")
+                text, receipt = m[6], m[7]
+                response = m[8] if self.v2 else ""
             matters.append({
                 "id": "%s-%d" % (TAG, i),
                 "chain_id": i,
@@ -107,10 +132,10 @@ class Docket:
                 "filedAt": _num(m[2]),
                 "ruledAt": _num(m[3]),
                 "ruling": RULING_NAMES.get(_num(m[4]), "?"),
-                "kind": KIND_NAMES.get(_num(m[5]), "?"),
-                "text": m[6],
-                "receipt": m[7],
-                "response": m[8] if self.v2 else "",
+                "kind": kind,
+                "text": text,
+                "receipt": receipt,
+                "response": response,
                 "chain": True,
             })
         self.matters = matters

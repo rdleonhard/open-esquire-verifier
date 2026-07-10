@@ -22,8 +22,9 @@
 </header>
 
 <div class="capacity-bar" title="Click for the full terms" onclick="toggleTerms()">
-  PERSONAL SCHOLARLY ATTESTATION &nbsp;&middot;&nbsp; NOT LEGAL ADVICE
-  &nbsp;&middot;&nbsp; NO ATTORNEY&ndash;CLIENT RELATIONSHIP IS FORMED
+  ANSWERS ONE QUESTION: IS THIS CITATION ON COURTLISTENER?
+  &nbsp;&middot;&nbsp; NOT A GOOD-LAW OPINION &nbsp;&middot;&nbsp; NOT LEGAL ADVICE
+  &nbsp;&middot;&nbsp; NO ATTORNEY&ndash;CLIENT RELATIONSHIP
   <span class="terms-link">FULL TERMS &#9662;</span>
 </div>
 <div id="terms" class="terms hidden"></div>
@@ -38,13 +39,9 @@
     </div>
 
     <div class="panel">
-      <div class="panel-title">FILE A PRACTICE MATTER <span class="tag tag-practice">OFF-CHAIN</span></div>
+      <div class="panel-title">FILE A PRACTICE CITATION <span class="tag tag-practice">OFF-CHAIN</span></div>
       <div class="practice-form">
-        <select id="p-kind">
-          <option value="cite">CITATION</option>
-          <option value="char">CHARACTERIZATION</option>
-        </select>
-        <textarea id="p-text" rows="3" placeholder="Paste the AI's claim of authority&hellip;"></textarea>
+        <textarea id="p-text" rows="2" placeholder="Paste one citation (Bluebook or similar) &mdash; e.g. 410 U.S. 113&hellip;"></textarea>
         <button class="gold" onclick="filePractice()">FILE ON THE DOCKET</button>
       </div>
     </div>
@@ -85,28 +82,21 @@
         <div class="m-text" id="m-text"></div>
 
         <div class="authority">
-          <button class="blue" id="lookupbtn" onclick="lookup()">PULL CITED AUTHORITY &mdash; COURTLISTENER</button>
+          <button class="blue" id="lookupbtn" onclick="lookup()">CHECK COURTLISTENER</button>
           <div id="cl-note" class="cl-note"></div>
           <div id="cl-results"></div>
         </div>
 
-        <div id="rewrite" class="rewrite hidden">
-          <div class="rw-label">CORRECTED CHARACTERIZATION
-            <span class="rw-hint">returned to the requester; the capacity terms are appended automatically</span></div>
-          <textarea id="rw-text" rows="6"
-            placeholder="Rewrite the characterization so it fairly reads the cited authority&hellip;"></textarea>
-        </div>
-
         <div class="bench">
           <button class="bench-btn b-ver" onclick="openRule('verified')">
-            <span class="glyph">&#10003;</span>VERIFIED</button>
+            <span class="glyph">&#10003;</span>YES<small class="bsub">ON COURTLISTENER</small></button>
           <button class="bench-btn b-den" onclick="openRule('denied')">
-            <span class="glyph">&#8856;</span>DENIED</button>
+            <span class="glyph">&#8856;</span>DENIED<small class="bsub">NO ANSWER &mdash; REFUND</small></button>
           <button class="bench-btn b-wrg" onclick="openRule('wrong')">
-            <span class="glyph">&#10007;</span>WRONG</button>
+            <span class="glyph">&#10007;</span>NO<small class="bsub">NOT ON COURTLISTENER</small></button>
         </div>
         <div class="bench-legend">
-          VERIFIED / WRONG &rarr; escrow is <b>burned</b> &nbsp;&middot;&nbsp;
+          YES / NO &rarr; the answer is given, escrow is <b>burned</b> &nbsp;&middot;&nbsp;
           DENIED &rarr; the asker is <b>refunded</b>
         </div>
       </div>
@@ -126,10 +116,12 @@
     <div id="modal-consequence" class="modal-consequence"></div>
     <label class="attest">
       <input type="checkbox" id="attest">
-      I enter this ruling <b>personally and not in my capacity as an attorney
-      for any party</b>. I am not giving legal advice; no attorney&ndash;client
-      relationship or privilege is formed with the requester or anyone else,
-      and the capacity terms will be embedded in the ruling record.
+      I am answering <b>only</b> whether this citation matches a case on
+      CourtListener at this moment &mdash; <b>not</b> whether any case is good
+      law or supports any proposition. I act <b>personally and not as an
+      attorney for any party</b>; no attorney&ndash;client relationship or
+      privilege is formed, and the narrow-attestation terms are embedded in
+      the ruling record.
     </label>
     <div class="modal-actions">
       <button class="mini" onclick="closeModal()">WITHDRAW</button>

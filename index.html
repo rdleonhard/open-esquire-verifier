@@ -95,11 +95,18 @@ footer a{color:var(--gold-dim)}
 </header>
 
 <div class="intro">
-  A <b>licensed attorney</b> reviews case-law claims presented by AI models and rules on
-  each matter from a dedicated hardware verifier. Rulings are final and recorded here verbatim:
-  <b class="v">&#10003; VERIFIED</b> &mdash; the citation is real and good law, or the characterization is accurate &middot;
-  <b class="w">&#10007; WRONG</b> &mdash; reviewed and found inaccurate or nonexistent &middot;
-  <b class="d">&#8856; DENIED</b> &mdash; the attorney declines the question (asker refunded).
+  One narrow, durable question per token, answered by a <b>human verifier</b>
+  (a licensed attorney acting personally, not as counsel):
+  <b>does this citation match a case on
+  <a href="https://www.courtlistener.com" style="color:#8b9dff">CourtListener</a></b>
+  (the Free Law Project's public database)<b>?</b>
+  <b class="v">&#10003; YES</b> &mdash; a matching citation is on CourtListener &middot;
+  <b class="w">&#10007; NO</b> &mdash; no matching citation there (unpublished, sealed, or
+  unindexed decisions may not appear) &middot;
+  <b class="d">&#8856; DENIED</b> &mdash; the verifier declines to answer (asker refunded).
+  An answer is <b>not</b> a statement that any case is good law, remains valid, or supports
+  any proposition &mdash; case law changes constantly and this service does not track it.
+  Built for one job: catching <b>hallucinated citations</b> before they reach a brief.
 </div>
 
 <div class="intro" id="policy" style="display:none"></div>
@@ -108,29 +115,33 @@ footer a{color:var(--gold-dim)}
 
 <div class="onchain">
   <h3>ON-CHAIN DOCKET &middot; BASE MAINNET</h3>
-  <div><span class="lbl">DOCKET CONTRACT (VerifierDocketV2)</span><br>
-    <a href="https://basescan.org/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110"><code>0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110</code></a>
-    &nbsp;(<a href="https://base.blockscout.com/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110?tab=contract">verified source</a>)</div>
+  <div><span class="lbl">DOCKET CONTRACT (CitationDocket)</span><br>
+    <a href="https://basescan.org/address/0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768"><code>0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768</code></a>
+    &nbsp;(<a href="https://base.blockscout.com/address/0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768?tab=contract">verified source</a>)</div>
   <div><span class="lbl">PAYMENT TOKEN (OED)</span><br>
     <a href="https://basescan.org/address/0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a"><code>0x3dBA8E4699F8d200B5a82D8eb8641397B8689E7a</code></a></div>
   <div style="margin-top:10px">
-    <span class="lbl">TO FILE A MATTER</span> &mdash; <code>approve</code> the docket for the
-    fee, then call <code>submit(kind, text)</code>. Fees:
-    <b>10&nbsp;OED</b> citation check (kind&nbsp;1) &middot;
-    <b>50&nbsp;OED</b> characterization review (kind&nbsp;2 &mdash; a
-    <b>WRONG</b> ruling must return the attorney's corrected characterization,
-    recorded on-chain and printed on this docket).
-    Your tokens sit in escrow while the attorney reviews;
-    a <b>VERIFIED</b> or <b>WRONG</b> ruling burns them, <b>DENIED</b> refunds you.
-    <b>Refund guarantee:</b> if no ruling is entered within <code>maxWaitS</code>
+    <span class="lbl">TO FILE</span> &mdash; <code>approve</code> the docket for
+    <b>1&nbsp;OED</b>, then call <code>submit(citation)</code> with one citation
+    in Bluebook or similar standard form (max 300 characters).
+    <b>1 token = 1 yes/no answer.</b>
+    <b>YES</b> and <b>NO</b> both answer the question and burn the escrow;
+    <b>DENIED</b> refunds you.
+    <b>Refund guarantee:</b> if no answer is entered within <code>maxWaitS</code>
     (30&nbsp;minutes), anyone may call <code>reclaim(id)</code> and the escrow
-    returns to the asker &mdash; trustlessly. Matters ruled on-chain carry a
+    returns to the asker &mdash; trustlessly. Matters answered on-chain carry a
     <span style="color:#8b9dff">BASE&nbsp;MAINNET</span> badge below.
   </div>
   <div style="margin-top:10px;font-size:11px">
-    <span class="lbl">PRIOR CONTRACT</span> &mdash; matters <code>B8453-*</code> were ruled on
-    <a href="https://base.blockscout.com/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">VerifierDocket&nbsp;V1</a>
+    <span class="lbl">PRIOR CONTRACTS</span> &mdash;
+    <code>OE8453-*</code>: <a href="https://base.blockscout.com/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110">VerifierDocket&nbsp;V2</a>
+    (10/50&nbsp;OED, retired 2026-07-09) &middot;
+    <code>B8453-*</code>: <a href="https://base.blockscout.com/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">VerifierDocket&nbsp;V1</a>
     (flat 10&nbsp;OED, retired 2026-07-08).
+    Matters ruled under the earlier protocols (incl. device dockets
+    <code>D-*</code>) used broader review labels and remain here as
+    historical record; the current service answers only the
+    CourtListener-presence question above.
   </div>
 </div>
 
@@ -158,10 +169,11 @@ let DATA = {rulings: []}, FILTER = 'all', Q = '';
 
 const KINDS = {cite: 'CITATION', char: 'CHARACTERIZATION'};
 const STAMPS = {
-  verified: {sym: '✓', label: 'GOOD LAW'},
-  wrong:    {sym: '✗', label: 'INACCURATE'},
+  verified: {sym: '✓', label: 'ON COURTLISTENER'},
+  wrong:    {sym: '✗', label: 'NOT ON COURTLISTENER'},
   denied:   {sym: '⊘', label: 'REFUNDED'},
 };
+const VERDICT_WORDS = {verified: 'YES', wrong: 'NO', denied: 'DENIED'};
 
 function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 
@@ -185,7 +197,9 @@ function render(){
   el.innerHTML = rows.map(r => {
     const s = STAMPS[r.decision] || {sym:'?', label:''};
     let kind = KINDS[r.kind] ? `<span class="kind">${KINDS[r.kind]}</span>` : '';
-    if (r.id.startsWith('OE8453-')) kind +=
+    if (r.id.startsWith('CL8453-')) kind +=
+      `<a class="kind chain" href="https://basescan.org/address/0x42Fc6DfEA560b0272D2Ab83AE6a30fCF1181e768">BASE MAINNET</a>`;
+    else if (r.id.startsWith('OE8453-')) kind +=
       `<a class="kind chain" href="https://basescan.org/address/0x67f8c3de699eD6096E13d3e5E9EFad1eeD73F110">BASE MAINNET</a>`;
     else if (r.id.startsWith('B8453-')) kind +=
       `<a class="kind chain" href="https://basescan.org/address/0xe32f5a7218e46D579c61F64198cC1eB23DbEE7d7">BASE MAINNET</a>`;
@@ -196,7 +210,7 @@ function render(){
       <div class="text">${esc(r.text)}</div>
       ${r.response ? `<div class="response"><span class="rlabel">CORRECTED CHARACTERIZATION
         &mdash; RETURNED TO THE ASKER</span>${esc(r.response)}</div>` : ''}
-      <span class="stamp ${r.decision}">${s.sym} ${r.decision.toUpperCase()}<small>${s.label}</small></span>
+      <span class="stamp ${r.decision}">${s.sym} ${VERDICT_WORDS[r.decision] || r.decision.toUpperCase()}<small>${s.label}</small></span>
     </div>`;
   }).join('');
   el.querySelectorAll('.docket').forEach(a => a.addEventListener('click', () => {

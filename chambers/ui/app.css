@@ -198,6 +198,8 @@ main {
   font-size: 12.5px; letter-spacing: 3px; color: var(--ivory);
 }
 .bench-btn .glyph { display: block; font-size: 22px; margin-bottom: 4px; }
+.bench-btn .bsub { display: block; font-size: 8.5px; letter-spacing: 1.5px;
+  color: #6a6658; margin-top: 4px; }
 .b-ver .glyph { color: var(--green); }
 .b-den .glyph { color: var(--silver); }
 .b-wrg .glyph { color: var(--oxblood); }

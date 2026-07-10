@@ -35,21 +35,24 @@ DEFAULT_SETTINGS = {
     "auto_deny_minutes": 30,
 }
 
-# Draft attestation — the attorney authored/approved this wording in-app;
-# it is embedded verbatim in every ruling record and every characterization
-# response so the no-relationship terms travel with the work product.
+# Draft attestation (for the attorney's review) — embedded verbatim in every
+# ruling record so the narrow claim and no-relationship terms travel with it.
+# The service answers ONE durable, factual question and nothing more.
 DISCLAIMER = (
-    "INDEPENDENT SCHOLARLY ATTESTATION - NOT LEGAL ADVICE. This ruling is a "
-    "personal, scholarly attestation about published case law, entered for "
-    "a token fee. The verifier acts in an individual capacity and not as an "
-    "attorney for, or on behalf of, any requester or other person. No "
-    "attorney-client relationship, no privilege, and no duty of "
-    "representation is created by submitting a matter, paying a fee, or "
-    "receiving a ruling or corrected characterization. Rulings address only "
-    "(i) whether a cited authority exists and (ii) whether a stated "
-    "characterization fairly reads the cited text; they are not advice "
-    "about any person's rights or situation and may not be relied on as "
-    "such.")
+    "NARROW FACTUAL ATTESTATION - NOT LEGAL ADVICE. This ruling answers "
+    "exactly one question: whether the quoted citation matched a case in "
+    "the public CourtListener (Free Law Project) database at the time of "
+    "review. YES means a matching citation appeared there; NO means it did "
+    "not - which is NOT a statement that no such case exists anywhere "
+    "(unpublished, sealed, or unindexed decisions may not appear in that "
+    "database). A ruling is NOT a statement that any case is good law, "
+    "remains valid, has or has not been overruled, or supports any "
+    "proposition - case law changes constantly and this service does not "
+    "track it. The verifier acts personally and not as an attorney for, or "
+    "on behalf of, any requester or other person; no attorney-client "
+    "relationship or privilege is formed by submitting a matter, paying a "
+    "fee, or receiving an answer; nothing here is advice about any "
+    "person's rights or situation and it may not be relied on as such.")
 
 
 def _ensure():
@@ -159,7 +162,7 @@ def _save_practice(ms):
 def file_practice(kind, text):
     ms = practice_matters()
     n = 1 + max((int(m["id"].split("-")[1]) for m in ms), default=0)
-    m = {"id": "P-%d" % n, "kind": kind, "text": text[:4000],
+    m = {"id": "P-%d" % n, "kind": "cite", "text": text[:300],
          "filedAt": int(time.time()), "ruledAt": 0, "ruling": "pending",
          "paid": 0, "chain": False, "asker": "local", "receipt": ""}
     ms.append(m)

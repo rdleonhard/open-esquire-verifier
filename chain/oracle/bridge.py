@@ -47,28 +47,34 @@ MATTER_SIG_V1 = ("matters(uint256)"
 MATTER_SIG_V2 = ("matters(uint256)"
                  "((address,uint96,uint64,uint64,uint8,uint8,string,string,"
                  "string))")
+MATTER_SIG_V3 = ("matters(uint256)"
+                 "((address,uint96,uint64,uint64,uint8,string,string))")
 
-# Detected at startup: VerifierDocketV2 has per-kind pricing, a 4-arg rule()
-# carrying the attorney's corrected characterization, and trustless reclaim().
-V2 = False
+# Detected at startup. V3 = CitationDocket (one citation, one yes/no answer,
+# no kind byte); V2 had per-kind pricing + 4-arg rule; V1 the original.
+VERSION = 1
 MATTER_SIG = MATTER_SIG_V1
 
 
 def detect_version():
-    global V2, MATTER_SIG, TAG
+    global VERSION, MATTER_SIG, TAG
     try:
         cast_call("priceOf(uint8)(uint256)", 2)
-        V2 = True
-        MATTER_SIG = MATTER_SIG_V2
+        VERSION = 2
     except Exception:
-        V2 = False
-        MATTER_SIG = MATTER_SIG_V1
+        try:
+            cast_call("maxWaitS()(uint64)")
+            VERSION = 3
+        except Exception:
+            VERSION = 1
+    MATTER_SIG = {2: MATTER_SIG_V2, 3: MATTER_SIG_V3}.get(
+        VERSION, MATTER_SIG_V1)
     if not TAG:
-        TAG = "OE8453" if V2 else "B8453"
+        TAG = {2: "OE8453", 3: "CL8453"}.get(VERSION, "B8453")
 
 
 def send_rule(i, code, receipt, response=""):
-    if V2:
+    if VERSION == 2:
         return cast_send("rule(uint256,uint8,string,string)",
                          i, code, receipt, response)
     return cast_send("rule(uint256,uint8,string)", i, code, receipt)
@@ -201,8 +207,11 @@ def cycle():
     now = time.time()
     for i in range(int(n)):
         m = cast_call(MATTER_SIG, i)
-        # tuple: (asker, paid, filedAt, ruledAt, ruling, kind, text, receipt)
-        ruling, kind, text = _num(m[4]), _num(m[5]), m[6]
+        # V1/V2: (asker, paid, filedAt, ruledAt, ruling, kind, text, ...)
+        # V3:    (asker, paid, filedAt, ruledAt, ruling, citation, receipt)
+        ruling = _num(m[4])
+        kind = 1 if VERSION == 3 else _num(m[5])
+        text = m[5] if VERSION == 3 else m[6]
         if ruling != 0:                      # already ruled on-chain
             continue
         vid = "%s-%d" % (TAG, i)
@@ -225,7 +234,7 @@ def cycle():
         if st and st.get("decision") in RULING_CODES:
             # the attorney's ruling beats the clock, even past the deadline
             d = st["decision"]
-            if V2 and kind == 2 and d == "wrong":
+            if VERSION == 2 and kind == 2 and d == "wrong":
                 # V2 requires the corrected characterization with a char
                 # WRONG ruling — the device tap can't compose one; the
                 # matter stays pending for Chambers (and its rewrite editor)
@@ -254,8 +263,8 @@ def main():
         sys.exit("set OE_DOCKET to the VerifierDocket address")
     once = "--once" in sys.argv
     detect_version()
-    log("oracle bridge up: docket %s (%s) rpc %s tag %s"
-        % (DOCKET, "V2" if V2 else "V1", RPC, TAG))
+    log("oracle bridge up: docket %s (V%d) rpc %s tag %s"
+        % (DOCKET, VERSION, RPC, TAG))
     while True:
         try:
             cycle()

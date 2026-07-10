@@ -74,8 +74,7 @@ function renderChip() {
   const short = (a) => a ? a.slice(0, 6) + "…" + a.slice(-4) : "?";
   let html = `BASE MAINNET ◆ DOCKET <a target="_blank"
     href="https://base.blockscout.com/address/${c.docket}">${short(c.docket)}</a><br>
-    CITE ${oed(c.price)} · CHAR ${oed(c.price_char)}${c.v2 ? "" :
-    " <span title='flat price until VerifierDocketV2 is deployed'>(V1 flat)</span>"}`;
+    ${oed(c.price)} = 1 YES/NO ANSWER`;
   if (c.error) html += `<br><span class="err">CHAIN: ${esc(c.error.slice(0, 60))}</span>`;
   $("chainchip").innerHTML = html;
 }
@@ -88,8 +87,7 @@ function renderDocket() {
     <div class="docket-item ${m.id === selected ? "sel" : ""}" onclick="select('${esc(m.id)}')">
       <div class="d-head">
         <span class="d-id">${esc(m.id)}</span>
-        <span class="tag tag-${m.kind === "char" ? "char" : "cite"}">
-          ${m.kind === "char" ? "CHARACTERIZATION" : "CITATION"}</span>
+        <span class="tag tag-cite">CITATION</span>
         <span class="tag ${m.chain ? "tag-chain" : "tag-practice"}">
           ${m.chain ? "BASE" : "PRACTICE"}</span>
         ${clockTag(m)}
@@ -104,8 +102,7 @@ let renderedMatter = null;   // don't wipe lookup results / a rewrite draft
 
 function renderMeta(m) {
   $("m-meta").innerHTML = `
-    <span class="tag tag-${m.kind === "char" ? "char" : "cite"}">
-      IN RE: AI-PRESENTED ${m.kind === "char" ? "CHARACTERIZATION" : "CITED AUTHORITY"}</span>
+    <span class="tag tag-cite">IN RE: IS THIS CITATION ON COURTLISTENER?</span>
     <span class="tag ${m.chain ? "tag-chain" : "tag-practice"}">${m.chain ? "BASE MAINNET" : "PRACTICE"}</span>
     ${m.chain ? `<span class="tag tag-fee">ESCROW ${oed(m.paid)}</span>
       <span>ASKER ${esc(m.asker.slice(0, 10))}…</span>` : ""}
@@ -129,8 +126,7 @@ function renderMatter() {
   $("m-text").textContent = m.text;
   $("cl-results").innerHTML = "";
   $("cl-note").textContent = "";
-  $("rewrite").classList.toggle("hidden", m.kind !== "char");
-  $("rw-text").value = "";
+  lookup();          // the whole question IS the lookup — run it right away
 }
 
 function renderRep() {
@@ -156,9 +152,11 @@ function renderHistory() {
   const h = S.history || [];
   const box = $("history");
   if (!h.length) { box.innerHTML = '<div class="empty">NO RULINGS YET</div>'; return; }
+  const hlabel = {verified: "YES — ON CL", wrong: "NO — NOT ON CL",
+                  denied: "DENIED"};
   box.innerHTML = h.slice(0, 12).map((r) => `
     <div class="h-item">
-      <span class="h-verdict hv-${esc(r.decision)}">${esc(r.decision).toUpperCase()}</span>
+      <span class="h-verdict hv-${esc(r.decision)}">${hlabel[r.decision] || esc(r.decision).toUpperCase()}</span>
       <span class="h-id">${esc(r.id)}</span>
       <span style="color:#6a6658;font-size:11px">${esc(r.date)} ${esc(r.ruled)}</span>
       ${r.tx ? `<span class="h-tx"><a target="_blank"
@@ -218,32 +216,30 @@ async function lookup() {
 async function filePractice() {
   const text = $("p-text").value.trim();
   if (!text) return;
-  const m = await api("/api/practice", {kind: $("p-kind").value, text});
+  const m = await api("/api/practice", {text});
   $("p-text").value = "";
   S = await api("/api/state");
   selected = m.id;
   render();
 }
 
+const VERDICTS = {
+  verified: {label: "YES — ON COURTLISTENER", color: "var(--green)"},
+  denied: {label: "DENIED — NO ANSWER", color: "var(--silver)"},
+  wrong: {label: "NO — NOT ON COURTLISTENER", color: "var(--oxblood)"},
+};
+
 function openRule(decision) {
   const m = matterById(selected);
   if (!m) return;
-  if (m.kind === "char" && decision === "wrong" && !$("rw-text").value.trim()) {
-    $("cl-note").textContent =
-      "A corrected characterization is required to rule this matter WRONG — " +
-      "the rewrite is what the higher fee buys.";
-    $("rw-text").focus();
-    return;
-  }
   pendingDecision = decision;
-  $("modal-verdict").textContent = decision.toUpperCase();
-  $("modal-verdict").style.color =
-    {verified: "var(--green)", denied: "var(--silver)", wrong: "var(--oxblood)"}[decision];
+  $("modal-verdict").textContent = VERDICTS[decision].label;
+  $("modal-verdict").style.color = VERDICTS[decision].color;
   $("modal-consequence").textContent = !m.chain
     ? "Practice matter — recorded locally, nothing on-chain."
     : (decision === "denied"
         ? `The asker is refunded ${oed(m.paid)}.`
-        : `${oed(m.paid)} in escrow is burned; the ruling and receipt URL are posted on Base mainnet.`);
+        : `The answer is given: ${oed(m.paid)} in escrow is burned; the ruling and receipt URL are posted on Base mainnet.`);
   $("attest").checked = false;
   $("modal-err").textContent = "";
   $("modal").classList.remove("hidden");
@@ -260,9 +256,7 @@ async function confirmRule() {
   const btn = $("soorder");
   btn.disabled = true; btn.textContent = "ENTERING…";
   try {
-    await api("/api/rule", {
-      id: m.id, decision: pendingDecision, attest: true,
-      response: m.kind === "char" ? $("rw-text").value.trim() : ""});
+    await api("/api/rule", {id: m.id, decision: pendingDecision, attest: true});
     closeModal();
     selected = null;
     S = await api("/api/state");

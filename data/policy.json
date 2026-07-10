@@ -26,15 +26,15 @@
  },
  "auto_deny_minutes": 30.0,
  "in_session": true,
- "updated": "2026-07-10T12:35:46-0400",
+ "updated": "2026-07-10T12:53:39-0400",
  "record": {
   "attorney": "0x70f73FCc7550f74A5cB631E550970438EeAdbcC7",
-  "ruled": 1,
+  "ruled": 2,
   "verified": 1,
   "denied": 0,
-  "wrong": 0,
-  "burned": 1000000000000000000,
-  "median_turnaround_s": 76,
+  "wrong": 1,
+  "burned": 2000000000000000000,
+  "median_turnaround_s": 80,
   "since": 1783701233
  }
 }

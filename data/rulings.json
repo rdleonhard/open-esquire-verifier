@@ -1,6 +1,6 @@
 {
- "updated": "2026-07-10T12:35:46-0400",
- "total": 3,
+ "updated": "2026-07-10T12:53:39-04:00",
+ "total": 4,
  "rulings": [
   {
    "decision": "verified",
@@ -13,16 +13,14 @@
    "text": "Marbury v. Madison, 5 U.S. (1 Cranch) 137 (1803): the judicial power includes the authority to declare acts of Congress repugnant to the Constitution void."
   },
   {
-   "id": "OE8453-0",
+   "decision": "denied",
+   "filed": "15:22:36",
+   "ruled": "09:03:43",
+   "date": "2026-07-09",
+   "via": "tap",
    "kind": "char",
-   "text": "Gideon v. Wainwright, 372 U.S. 335 (1963) held that indigent defendants are entitled to appointed counsel in all criminal prosecutions, including petty offenses.",
-   "decision": "wrong",
-   "via": "chambers",
-   "filed": "15:22:17",
-   "ruled": "15:23:32",
-   "date": "2026-07-08",
-   "response": "Gideon v. Wainwright, 372 U.S. 335 (1963), held that the Sixth Amendment right to appointed counsel is fundamental and applies to the states through the Fourteenth Amendment; the case arose from a felony prosecution. Its extension to misdemeanors came later and only where actual imprisonment is imposed, Argersinger v. Hamlin, 407 U.S. 25 (1972); it does not reach every petty offense.\n\n-- INDEPENDENT SCHOLARLY ATTESTATION - NOT LEGAL ADVICE. This ruling is a personal, scholarly attestation about published case law, entered for a token fee. The verifier acts in an individual capacity and not as an attorney for, or on behalf of, any requester or other person. No attorney-client relationship, no privilege, and no duty of representation is created by submitting a matter, paying a fee, or receiving a ruling or corrected characterization. Rulings address only (i) whether a cited authority exists and (ii) whether a stated characterization fairly reads the cited text; they are not advice about any person's rights or situation and may not be relied on as such.",
-   "disclaimer": "INDEPENDENT SCHOLARLY ATTESTATION - NOT LEGAL ADVICE. This ruling is a personal, scholarly attestation about published case law, entered for a token fee. The verifier acts in an individual capacity and not as an attorney for, or on behalf of, any requester or other person. No attorney-client relationship, no privilege, and no duty of representation is created by submitting a matter, paying a fee, or receiving a ruling or corrected characterization. Rulings address only (i) whether a cited authority exists and (ii) whether a stated characterization fairly reads the cited text; they are not advice about any person's rights or situation and may not be relied on as such."
+   "id": "OE8453-0",
+   "text": "Gideon v. Wainwright, 372 U.S. 335 (1963) held that indigent defendants are entitled to appointed counsel in all criminal prosecutions, including petty offenses."
   },
   {
    "id": "CL8453-0",
@@ -32,6 +30,16 @@
    "via": "chambers",
    "filed": "12:33:53",
    "ruled": "12:35:08",
+   "date": "2026-07-10"
+  },
+  {
+   "id": "CL8453-1",
+   "kind": "cite",
+   "text": "Thompson v. Meridian Data Sys., 847 F.4th 1122 (9th Cir. 2019)",
+   "decision": "wrong",
+   "via": "chambers",
+   "filed": "12:51:07",
+   "ruled": "12:52:25",
    "date": "2026-07-10"
   }
  ]

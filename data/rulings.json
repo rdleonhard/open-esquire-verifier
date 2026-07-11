@@ -1,5 +1,5 @@
 {
- "updated": "2026-07-10T12:53:39-04:00",
+ "updated": "2026-07-11T08:29:24-04:00",
  "total": 4,
  "rulings": [
   {
@@ -33,14 +33,14 @@
    "date": "2026-07-10"
   },
   {
-   "id": "CL8453-1",
-   "kind": "cite",
-   "text": "Thompson v. Meridian Data Sys., 847 F.4th 1122 (9th Cir. 2019)",
    "decision": "wrong",
-   "via": "chambers",
-   "filed": "12:51:07",
-   "ruled": "12:52:25",
-   "date": "2026-07-10"
+   "filed": "12:51:31",
+   "ruled": "07:47:51",
+   "date": "2026-07-11",
+   "via": "tap",
+   "kind": "cite",
+   "id": "CL8453-1",
+   "text": "Thompson v. Meridian Data Sys., 847 F.4th 1122 (9th Cir. 2019)"
   }
  ]
 }

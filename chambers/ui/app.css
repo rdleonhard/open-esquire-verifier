@@ -183,6 +183,15 @@ main {
 .cl-found { color: var(--green); font-size: 11px; letter-spacing: 2px; }
 .cl-notfound { color: var(--oxblood); font-size: 11px; letter-spacing: 2px; font-weight: bold; }
 .cl-amb { color: var(--gold); font-size: 11px; letter-spacing: 2px; }
+.cl-notice {
+  width: 100%; border: 1px solid var(--oxblood); background: #170a0d;
+  color: #e08a95; font-size: 11.5px; letter-spacing: 1.5px; line-height: 1.5;
+  padding: 7px 10px; margin: 2px 0 4px;
+}
+.cl-check { width: 100%; font-size: 11.5px; letter-spacing: .8px; padding-left: 6px; }
+.ck-ok { color: var(--green); }
+.ck-bad { color: #e08a95; font-weight: bold; }
+.ck-na { color: var(--silver); }
 .cl-case { width: 100%; color: var(--silver); font-size: 12.5px; padding-left: 6px; }
 .cl-case a { color: var(--blue); text-decoration: none; }
 .cl-case a:hover { text-decoration: underline; }

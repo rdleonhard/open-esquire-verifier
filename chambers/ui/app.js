@@ -194,13 +194,25 @@ async function lookup() {
   try {
     const d = await api("/api/lookup", {text: m.text});
     $("cl-note").textContent = d.note || (d.mode === "token" ? "citation-lookup (authenticated)" : "");
+    const CHECK_WORDS = {name: "NAME", year: "YEAR", court: "COURT"};
     $("cl-results").innerHTML = (d.citations || []).map((c) => `
       <div class="cl-cite">
         <span class="cite">${esc(c.cite)}</span>
-        <span class="${{found: "cl-found", not_found: "cl-notfound",
+        <span class="${c.on_notice ? "cl-amb" :
+                       {found: "cl-found", not_found: "cl-notfound",
                         ambiguous: "cl-amb"}[c.status] || "cl-amb"}">
-          ${{found: "✓ REPORTED", not_found: "✗ NOT FOUND — LIKELY FABRICATED",
+          ${c.on_notice ? "⚠ RESOLVES — BUT PARTS MISMATCH" :
+            {found: "✓ REPORTED", not_found: "✗ NOT FOUND — LIKELY FABRICATED",
              ambiguous: "⚠ AMBIGUOUS"}[c.status] || "⚠ " + esc(c.detail || "ERROR")}</span>
+        ${c.on_notice ? `<div class="cl-notice">⚠ ON NOTICE — THE CITATION RESOLVES,
+          BUT PARTS DO NOT MATCH THE REPORTED CASE. As presented, this citation
+          does not match a case on CourtListener.</div>` : ""}
+        ${(c.checks || []).map((ch) => `<div class="cl-check ${
+            ch.ok === true ? "ck-ok" : ch.ok === false ? "ck-bad" : "ck-na"}">
+          ${ch.ok === true ? "✓" : ch.ok === false ? "✗" : "⚠"}
+          ${CHECK_WORDS[ch.field] || esc(ch.field)}
+          ${ch.ok === true ? "MATCHES" : ch.ok === false ? "DOES NOT MATCH" : "NOT VERIFIED"}
+          — cited ${esc(ch.claimed)}; reporter shows ${esc(ch.actual)}</div>`).join("")}
         ${(c.cases || []).map((k) => `<div class="cl-case">${esc(k.name)}
           — ${esc(k.court)}${k.date ? ", " + esc(k.date) : ""}
           ${k.url ? ` <a target="_blank" href="${esc(k.url)}">read ↗</a>` : ""}</div>`).join("")}

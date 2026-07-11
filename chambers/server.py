@@ -80,6 +80,11 @@ def _lookup_hint(text):
             return " — CL: no citation recognized"
         c = cites[0]
         name = c["cases"][0]["name"] if c.get("cases") else ""
+        bad = [ch["field"].upper() for ch in c.get("checks", [])
+               if ch["ok"] is False]
+        if bad:
+            return (" — CL: ⚠ ON NOTICE, %s MISMATCH (reporter shows %s)"
+                    % ("+".join(bad), name or "?"))
         return " — CL: %s%s" % (c["status"].upper().replace("_", " "),
                                 " (%s)" % name if name else "")
     except Exception:

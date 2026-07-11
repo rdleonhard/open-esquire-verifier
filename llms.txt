@@ -8,6 +8,11 @@
 
 ## The question (and what it is not)
 
+- Submit the FULL citation — case name, volume/reporter/page, and
+  (court year), e.g. "Roe v. Wade, 410 U.S. 113 (1973)". Every component
+  is verified: a citation that resolves to a DIFFERENT case name, year,
+  or court is answered NO — a real reporter page wearing a fake name is
+  still a fabricated citation.
 - YES: a matching citation appears in the CourtListener (Free Law Project)
   database at ruling time.
 - NO: no matching citation there. Likely hallucinated. NOT a statement

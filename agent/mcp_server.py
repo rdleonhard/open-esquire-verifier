@@ -223,8 +223,11 @@ TOOLS = [
      "description": ("Pay 1 OED to ask the one question: does this citation "
                      "match a case on CourtListener? A licensed attorney "
                      "(acting personally; no attorney-client relationship) "
-                     "answers YES / NO / DENIED. Bluebook or similar form, "
-                     "one citation, max 300 chars."),
+                     "answers YES / NO / DENIED. Submit the FULL citation - "
+                     "name, volume/reporter/page, (court year) - every "
+                     "component is verified; a citation resolving to a "
+                     "different case name/year/court is answered NO. One "
+                     "citation, max 300 chars."),
      "inputSchema": {"type": "object",
                      "properties": {
                          "citation": {"type": "string",

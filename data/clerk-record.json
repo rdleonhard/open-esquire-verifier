@@ -1,0 +1,33 @@
+{
+ "service": "The Clerk \u2014 free automated citation check",
+ "distinct_citations": 3,
+ "checks_served": 7,
+ "counts": {
+  "yes": 1,
+  "on_notice": 1,
+  "no": 1
+ },
+ "recent": [
+  {
+   "cite": "Thompson v. Meridian Data Sys., 512 F.3d 999 (11th Cir. 2019)",
+   "verdict": "on_notice",
+   "case": "Snodgrass v. Robinson",
+   "count": 2,
+   "last": 1784656137.129214
+  },
+  {
+   "cite": "Roe v. Wade, 410 U.S. 113 (1973)",
+   "verdict": "yes",
+   "case": "Roe v. Wade",
+   "count": 4,
+   "last": 1784656137.110678
+  },
+  {
+   "cite": "Fakerson v. Nobody, 999 F.9th 123 (2021)",
+   "verdict": "no",
+   "case": "",
+   "count": 1,
+   "last": 1784656102.943161
+  }
+ ]
+}

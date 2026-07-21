@@ -1,0 +1,18 @@
+[Unit]
+Description=Cloudflare quick tunnel for the Clerk (public HTTPS, no account)
+After=clerk.service network-online.target
+Wants=clerk.service network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+# A quick tunnel is anonymous (no login, no cert) and exposes ONLY the
+# Clerk's port — not SSH, not the Urbit moon. The public hostname is random
+# and changes when the tunnel restarts; the health monitor reports new URLs.
+Type=simple
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate --url http://localhost:8454
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

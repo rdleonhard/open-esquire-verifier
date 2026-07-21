@@ -54,7 +54,18 @@ elif [ "$temp" -le "$TEMP_OK" ] && [ "$(get thermal)" = eco ]; then
   put thermal ""
 fi
 
-# 4) disks
+# 4) public tunnel URL — the quick tunnel churns on restart; report changes
+if systemctl is-active --quiet cloudflared-clerk 2>/dev/null; then
+  url=$(journalctl -u cloudflared-clerk --no-pager -o cat 2>/dev/null \
+        | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" | tail -1)
+  if [ -n "$url" ] && changed tunnel "$url"; then
+    [ -n "$(get tunnelseen)" ] && notify "New public URL for the Clerk: $url" high link
+    put tunnel "$url"; put tunnelseen 1
+    echo "$url" > /mnt/ssd/clerk-data/tunnel-url.txt
+  fi
+fi
+
+# 5) disks
 for m in / /mnt/ssd; do
   pct=$(df --output=pcent "$m" 2>/dev/null | tail -1 | tr -dc 0-9)
   key="disk_${m//\//_}"

@@ -53,8 +53,21 @@ only on changes, so it stays quiet unless something actually happens. Test:
 
 ## Going public
 
-The service listens on all interfaces (LAN-reachable now). For LLMs on the
-open internet, add a tunnel from this box — a Cloudflare Tunnel or Tailscale
-Funnel gives a stable HTTPS hostname while keeping the CourtListener token
-and all data on the Jetson. That one step needs an interactive login and is
-the operator's choice of provider.
+The service listens on all interfaces (LAN-reachable). Two ways out to the
+open internet, both keeping the token and all data on the Jetson:
+
+**Quick tunnel — no account, no domain, no cost (current):**
+
+    sudo bash /mnt/ssd/open-esquire-verifier/clerk/jetson/install-tunnel.sh
+
+Installs `cloudflared` and a Cloudflare quick tunnel scoped to port 8454
+only (not SSH, not the moon). Prints a public `https://…trycloudflare.com`
+URL. That URL is **random and changes if the tunnel restarts** — the health
+monitor pushes the new one via ntfy, and it's always in
+`/mnt/ssd/clerk-data/tunnel-url.txt`. Best-effort; good for a beta.
+
+**Named tunnel — stable, branded (upgrade):** for a permanent address like
+`clerk.openesquire.com`, run `cloudflared tunnel login` (one browser login
+to a free Cloudflare account, using a domain you already own), create a
+named tunnel, and point the ExecStart at it with a `run <name>` config.
+Free; the only prerequisite is the domain.

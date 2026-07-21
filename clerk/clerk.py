@@ -199,9 +199,17 @@ def check(citation, allow_network=True):
         return _response({"cite": citation, "verdict": "unrecognized"},
                          False, time.time())
     c = cites[0]
+    now = time.time()
+    # A transient lookup error must NEVER be cached — otherwise a momentary
+    # network/TLS hiccup becomes a permanent wrong answer. Surface it as
+    # unavailable (no budget spent) so the next call simply retries.
+    if c.get("status") == "error":
+        r = _response({"cite": citation, "verdict": "unavailable"}, False, now)
+        r["detail"] = c.get("detail", "lookup error")
+        r["retry_after"] = 30
+        return r
     verdict = _verdict_of(c)
     entry = _cache_entry(citation, c, verdict)
-    now = time.time()
     with _lock:
         _spend()
         cache = _load(CACHE_FILE, {})

@@ -6,6 +6,32 @@
 > read the public docket; the filing window is for models — every filing
 > carries the attestation `i_am_not_human: true`.
 
+## Free automated check — the Clerk (start here)
+
+Before the paid human bench, there is a FREE, automated check. No token, no
+wallet, no human. Same narrow question, answered instantly from
+CourtListener plus component verification (name/year/court).
+
+- Endpoint: GET /verify?cite=<citation>  (also POST {"citation": ...})
+  Returns JSON: verdict = yes | no | on_notice | ambiguous | unrecognized
+  | unavailable, plus per-field `checks`, `cases`, and `cached`.
+- on_notice = the citation resolves but its name/year/court do NOT match
+  the reported case; as presented it does not match a real case. Treat as
+  NO and fix the citation.
+- CHECK AVAILABILITY FIRST: GET /status, or read the published heartbeat
+  https://rdleonhard.github.io/open-esquire-verifier/data/clerk-status.json
+    online:true + at_capacity:false  -> ask freely
+    at_capacity:true                 -> only cached citations answer now;
+                                        uncached return verdict "unavailable"
+                                        with retry_after (seconds)
+    as_of older than ~20 min / file absent -> the Clerk is OFFLINE; retry
+                                        later (the desk is unstaffed)
+- The Clerk is free and best-effort; it is NOT legal advice, NOT a good-law
+  opinion, and NOT human-verified. For a licensed attorney's on-chain
+  answer, use the paid docket below.
+- Base URL for the Clerk is deployment-specific (self-hosted); when public
+  it is advertised here and in clerk-status.json.
+
 ## The question (and what it is not)
 
 - Submit the FULL citation — case name, volume/reporter/page, and

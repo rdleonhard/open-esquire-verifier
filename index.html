@@ -24,6 +24,25 @@ h1{color:var(--gold);font-size:26px;letter-spacing:5px;margin:0}
  padding:14px 16px;margin:22px 0;font-size:13px;line-height:1.7;color:var(--gray)}
 .intro b{color:var(--white)}
 .intro .v{color:var(--gold)} .intro .w{color:var(--red)} .intro .d{color:var(--silver)}
+.clerk{border:1px solid var(--line);background:linear-gradient(180deg,#0c1017,#0b0e14);
+ border-radius:10px;padding:16px 18px;margin:22px 0;font-size:13px;line-height:1.7}
+.clerk h3{color:var(--gold);font-size:12px;letter-spacing:2.5px;margin:0 0 4px;
+ display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.clerk .free{border:1px solid var(--gold-dim);color:var(--gold);border-radius:5px;
+ font-size:9px;letter-spacing:1.5px;padding:2px 6px}
+.badge{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);
+ border-radius:20px;padding:3px 11px;font-size:11px;letter-spacing:1.5px;margin-left:auto}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:var(--dim);
+ box-shadow:0 0 0 0 rgba(0,0,0,0)}
+.badge.online{border-color:#2c5c3a;color:#79c07a}
+.badge.online .dot{background:#79c07a;box-shadow:0 0 8px #79c07a}
+.badge.capacity{border-color:var(--gold-dim);color:var(--gold)}
+.badge.capacity .dot{background:var(--gold)}
+.badge.offline{border-color:var(--ox);color:var(--red)}
+.badge.offline .dot{background:var(--red)}
+.clerk .sub{color:var(--dim);font-size:11px;letter-spacing:1px;margin-top:6px}
+.clerk code{background:#0d1119;border:1px solid var(--line);border-radius:5px;
+ padding:2px 6px;color:var(--white);font-size:11.5px}
 .chips{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}
 .chip{background:var(--panel);border:1px solid var(--line);border-radius:8px;
  padding:10px 16px;font-size:12px;letter-spacing:1px;min-width:96px}
@@ -110,6 +129,23 @@ footer a{color:var(--gold-dim)}
 </div>
 
 <div class="intro" id="policy" style="display:none"></div>
+
+<div class="clerk">
+  <h3>THE CLERK &mdash; FREE AUTOMATED CHECK <span class="free">BETA</span>
+    <span id="clerk-badge" class="badge"><span class="dot"></span><span id="clerk-badge-text">CHECKING&hellip;</span></span></h3>
+  Before the human-verified bench, there is <b>the Clerk</b>: a free, automated
+  check any language model can call. It answers the same narrow question
+  &mdash; <b>is this citation on CourtListener, and do its parts match?</b>
+  &mdash; instantly, with no token and no human, and puts you <b>on notice</b>
+  when a citation resolves but its name, year, or court do not match the
+  reported case. It is <b>not</b> legal advice or a good-law opinion; the
+  attorney-verified answer is the separate paid tier below.
+  <div class="sub" id="clerk-sub">
+    <code>GET /verify?cite=&lt;citation&gt;</code> &middot; see
+    <a href="llms.txt">llms.txt</a>. The Clerk is up only when the desk is
+    staffed &mdash; check the badge (or <code>/status</code>) before you ping.
+  </div>
+</div>
 
 <div class="chips" id="chips"></div>
 
@@ -264,6 +300,30 @@ document.querySelectorAll('.fbtn').forEach(b => b.onclick = () => {
 document.getElementById('q').addEventListener('input', e => {
   Q = e.target.value.trim().toLowerCase(); render();
 });
+
+// The Clerk (free automated tier) — availability from a published heartbeat.
+// Fresh as_of => ONLINE; spent budget => AT CAPACITY; stale/missing => OFFLINE
+// ("down when we are": no heartbeat republishes while the box is off).
+const CLERK_GRACE_MS = 20 * 60 * 1000;   // must exceed the publish cadence
+function setClerkBadge(cls, text){
+  const b = document.getElementById('clerk-badge');
+  b.className = 'badge ' + cls;
+  document.getElementById('clerk-badge-text').textContent = text;
+}
+fetch('data/clerk-status.json', {cache: 'no-store'})
+  .then(r => r.ok ? r.json() : null)
+  .then(s => {
+    if (!s || !s.as_of){ setClerkBadge('offline', 'OFFLINE'); return; }
+    const stale = (Date.now() - s.as_of * 1000) > CLERK_GRACE_MS;
+    if (stale){ setClerkBadge('offline', 'OFFLINE'); }
+    else if (s.at_capacity){ setClerkBadge('capacity', 'ONLINE · AT CAPACITY'); }
+    else { setClerkBadge('online', 'ONLINE'); }
+    const n = (s.cache_count != null) ? s.cache_count : 0;
+    if (!stale) document.getElementById('clerk-sub').insertAdjacentHTML(
+      'beforeend', ' &middot; <b style="color:var(--gray)">' + n +
+      '</b> citations on record');
+  })
+  .catch(() => setClerkBadge('offline', 'OFFLINE'));
 
 // session hours + auto-refund policy, published from Chambers (optional)
 fetch('data/policy.json', {cache: 'no-store'})

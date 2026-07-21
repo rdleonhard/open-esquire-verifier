@@ -31,7 +31,7 @@ echo "waiting for the tunnel to come up..."
 url=""
 for _ in $(seq 1 25); do
   url=$(journalctl -u cloudflared-clerk --no-pager -o cat 2>/dev/null \
-        | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" | tail -1)
+        | grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" | tail -1 || true)
   [ -n "$url" ] && break
   sleep 2
 done

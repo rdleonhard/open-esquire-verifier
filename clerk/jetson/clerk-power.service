@@ -1,0 +1,11 @@
+[Unit]
+Description=Set the Jetson power mode for the Clerk (balanced 15W)
+After=nvpmodel.service
+Wants=nvpmodel.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/clerk-power balanced
+
+[Install]
+WantedBy=multi-user.target

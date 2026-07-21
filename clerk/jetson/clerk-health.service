@@ -1,0 +1,8 @@
+[Unit]
+Description=Open Esquire Clerk — health monitor + push alerts
+After=clerk.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/mnt/ssd/clerk-data/clerk.env
+ExecStart=/mnt/ssd/open-esquire-verifier/clerk/jetson/clerk-health.sh

@@ -1,0 +1,20 @@
+[Unit]
+Description=Open Esquire — The Clerk (free automated citation check)
+After=network-online.target mnt-ssd.mount
+Wants=network-online.target
+RequiresMountsFor=/mnt/ssd
+OnFailure=clerk-alert@%n.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=rob
+EnvironmentFile=/mnt/ssd/clerk-data/clerk.env
+WorkingDirectory=/mnt/ssd/open-esquire-verifier/clerk
+ExecStart=/usr/bin/python3 /mnt/ssd/open-esquire-verifier/clerk/server.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

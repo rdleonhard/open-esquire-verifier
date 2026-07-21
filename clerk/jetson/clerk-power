@@ -1,0 +1,15 @@
+#!/bin/bash
+# Jetson Orin Nano Super power profiles for the Clerk host.
+#   eco       7W          (id 3) — lowest; the Clerk runs fine here
+#   balanced  15W         (id 0) — steady default; headroom for the moon
+#   full      MAXN_SUPER  (id 2) — max; only if something heavy needs it
+#   status                       — show the current mode
+# The Clerk is a featherweight HTTP service; it never needs full power.
+# The health monitor drops to eco automatically when the SoC runs hot.
+case "${1:-status}" in
+  eco)      sudo nvpmodel -m 3 >/dev/null && echo "power: eco (7W)";;
+  balanced) sudo nvpmodel -m 0 >/dev/null && echo "power: balanced (15W)";;
+  full)     sudo nvpmodel -m 2 >/dev/null && echo "power: full (MAXN_SUPER)";;
+  status)   nvpmodel -q | tail -2;;
+  *) echo "usage: clerk-power {eco|balanced|full|status}"; exit 1;;
+esac

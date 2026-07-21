@@ -38,7 +38,7 @@ if _CHAMBERS not in sys.path:
     sys.path.insert(0, _CHAMBERS)
 import courtlistener  # noqa: E402
 
-DATA_DIR = os.path.expanduser(
+DATA_DIR = os.environ.get("CLERK_DATA_DIR") or os.path.expanduser(
     "~/Library/Application Support/openesquire-clerk")
 CACHE_FILE = os.path.join(DATA_DIR, "cache.json")
 CALLS_FILE = os.path.join(DATA_DIR, "calls.json")
